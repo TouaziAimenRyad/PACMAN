@@ -46,6 +46,7 @@ public class Comm_client implements Runnable {
                 unregister_game();
                 break;
             case External.SIZE_REQ:
+                size_reply();
                 break;
             case External.LIST_REQ:
                 list_of_players();
@@ -325,6 +326,63 @@ public class Comm_client implements Runnable {
         out.write(buff,0,buff.length);
         out.flush();
 
+    }
+
+    private void size_reply() throws Exception{
+        byte[] buff = new byte[5];
+        int inc = 0, nb;
+
+        // read the last part of request
+        while (inc < buff.length) {
+            nb = in.read(buff, inc, buff.length - inc);
+            inc += nb;
+        }
+
+        byte n_game=buff[1];
+
+        if (!new String(buff,2,3).equals(new String(External.ETOILES))){
+            out.write(External.DUNNO, 0, External.DUNNO.length);
+            out.flush();
+            return;
+        }
+
+        Partie partie=null;
+
+        synchronized(Serveur.syn_nb_partie){
+            if(Serveur.list_parties_nc.containsKey(n_game)){
+                partie=Serveur.list_parties_nc.get(n_game);
+            }
+        }
+
+        if(partie==null){
+            out.write(External.DUNNO, 0, External.DUNNO.length);
+            out.flush();
+            return;
+        }
+
+        synchronized(partie){
+            short h=partie.get_hauteur();
+            short l=partie.get_largeur();
+        }
+
+        buff=new byte[16];
+        int offset=0;
+        External.arraycopy(buff,offset, External.SIZE_REP,0, External.SIZE_REP.length);
+        offset+=External.SIZE_REP.length;
+        buff[offset]=n_game;
+        buff[offset+1]=' ';
+        offset+=2;
+        buff[offset] = (byte) h;
+        buff[offset+1] = (byte) (h >> 8);
+        offset+=2;
+        buff[offset]=' ';
+        buff[offset+1] = (byte) l;
+        buff[offset+2] = (byte) (l >> 8);
+        offset+=3;
+        External.arraycopy(buff, offset, External.ETOILES, 0, External.ETOILES.length);
+
+        out.write(buff,0,buff.length);
+        out.flush();
     }
 
 }
