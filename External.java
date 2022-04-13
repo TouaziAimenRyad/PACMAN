@@ -11,7 +11,7 @@ public abstract class External {
     static byte[] LIST_REP = "LIST! ".getBytes();
     static byte[] REGNO = "REGNO***".getBytes();
     static byte[] REGOK = "REGOK ".getBytes();
-    static byte[] PLAYER = "PLAYER ".getBytes();
+    static byte[] PLAYER = "PLAYR ".getBytes();
 
     static final String START = "START";
     static final String SIZE_REQ = "SIZE?";

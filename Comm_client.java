@@ -35,37 +35,48 @@ public class Comm_client implements Runnable {
         int inc = 0, nb;
         byte[] buff = new byte[5];
 
-        // read the first part of request
-        while (inc < 5) {
-            nb = in.read(buff, inc, 5 - inc);
-            inc += nb;
-        }
+        boolean start=false;
 
-        switch (new String(buff)) {
-            case External.UNREG:
-                unregister_game();
-                break;
-            case External.SIZE_REQ:
-                size_reply();
-                break;
-            case External.LIST_REQ:
-                list_of_players();
-                break;
-            case External.GAME_REQ:
-                game_req();
-                break;
-            case External.NEWLP:
-                create_new_game();
-                break;
-            case External.START:
-                break;
-            case External.REGIS:
-                join_game();
-                break;
-            default:
-                out.write(External.DUNNO, 0, External.DUNNO.length);
+        while(!start){
+            
+            inc=0;
+            // read the first part of request
+            while (inc < 5) {
+                nb = in.read(buff, inc, 5 - inc);
+                if(nb==-1){
+                    return;
+                }
+                inc += nb;
+            }
 
-        }
+            switch (new String(buff)) {
+                case External.UNREG:
+                    unregister_game();
+                    break;
+                case External.SIZE_REQ:
+                    size_reply();
+                    break;
+                case External.LIST_REQ:
+                    list_of_players();
+                    break;
+                case External.GAME_REQ:
+                    game_req();
+                    break;
+                case External.NEWLP:
+                    create_new_game();
+                    break;
+                case External.START:
+                    start_game();
+                    break;
+                case External.REGIS:
+                    join_game();
+                    break;
+                default:
+                    out.write(External.DUNNO, 0, External.DUNNO.length);
+            }
+        } 
+        
+        
 
     }
 
@@ -78,17 +89,17 @@ public class Comm_client implements Runnable {
         External.arraycopy(buff, offset, External.GAMES, 0, External.GAMES.length);
         offset += External.GAMES.length;
         External.arraycopy(buff, offset+1, External.ETOILES, 0, External.ETOILES.length);
-        buff= null;
+        
         synchronized (Serveur.syn_nb_partie) {
             buff[offset] = Serveur.nb_partie;
             out.write(buff, 0, buff.length);
             // send games
             out.flush();
-
+            buff= null;
             // check if they exist game
             if (Serveur.nb_partie > 0) {
                 offset = 0;
-                buff = new byte[10 * Serveur.nb_partie];
+                buff = new byte[12 * Serveur.nb_partie];
                 // fill buffer with list of ogams
                 for (Byte p : Serveur.list_parties_nc.keySet()) {
                     External.arraycopy(buff, offset, External.OGAMES, 0, External.OGAMES.length);
@@ -147,7 +158,7 @@ public class Comm_client implements Runnable {
         Partie partie;
         synchronized(Serveur.syn_nb_partie){
             while (true) {
-                n_game = new Integer(r.nextInt(255) + 1).byteValue();
+                n_game = (byte)(r.nextInt(255) + 1);
                 if (!Serveur.list_parties_nc.containsKey(n_game))break;
             }
             partie=Serveur.add_new_game(n_game,player);
@@ -160,8 +171,8 @@ public class Comm_client implements Runnable {
             return;
         }
 
-        player.setgame(n_game);
         int offset=0;
+        player.setgame(partie);
         External.arraycopy(buff, offset,External.REGOK,0,External.REGOK.length);
         offset+=External.REGOK.length;
         buff[offset]=n_game;
@@ -182,6 +193,7 @@ public class Comm_client implements Runnable {
             nb = in.read(buff, inc, buff.length - inc);
             inc += nb;
         }
+        
         try {
             // set id player
             player.setid(new String(buff, 1, 8));
@@ -197,6 +209,7 @@ public class Comm_client implements Runnable {
             out.flush();
             return;
         }
+
         Partie partie=null;
         synchronized(Serveur.syn_nb_partie){
             if(!Serveur.list_parties_nc.containsKey(n_game)){
@@ -213,7 +226,7 @@ public class Comm_client implements Runnable {
             return; 
         }
 
-        player.setgame(n_game);
+        player.setgame(partie);
         int offset=0;
         External.arraycopy(buff, offset,External.REGOK,0,External.REGOK.length);
         offset+=External.REGOK.length;
@@ -233,24 +246,27 @@ public class Comm_client implements Runnable {
             inc+=nb;
         }
 
-        if (!new String(Buff).equals(new String(External.ETOILES))){
+        String st=new String(Buff,0,3);
+        if (!st.equals(new String(External.ETOILES))){
             out.write(External.DUNNO, 0, External.DUNNO.length);
             out.flush();
             return;
         }
         
-        Byte n_game=player.getgame();
+        Partie game=player.getgame();
         // joueur non inscrit a une game
-        if (n_game==null){
+        if (game==null){
             out.write(External.DUNNO, 0, External.DUNNO.length);
             out.flush();
             return;
         }
 
-        synchronized(Serveur.syn_nb_partie){
-            Partie partie= Serveur.list_parties_nc.get(player.getgame());
-            if(partie.remove_player(player)){
-                Serveur.list_parties_nc.remove(n_game);
+        byte num=game.getnumero();
+
+        if (game.remove_player(player)){
+            synchronized(Serveur.syn_nb_partie){
+                Serveur.list_parties_nc.remove(num);
+                Serveur.nb_partie--;   
             }
         }
 
@@ -258,7 +274,7 @@ public class Comm_client implements Runnable {
         int offset=0;
         External.arraycopy(Buff,offset,External.UNROK, 0,External.UNROK.length);
         offset+=External.UNROK.length;
-        Buff[offset]=n_game;
+        Buff[offset]=num;
         offset++;
         External.arraycopy(Buff,offset,External.ETOILES, 0,External.ETOILES.length);
         out.write(Buff, 0, 10);
@@ -301,6 +317,13 @@ public class Comm_client implements Runnable {
 
         synchronized(partie){
             byte s=partie.getnbjoueur();
+            
+            if (s==0){
+                out.write(External.DUNNO, 0, External.DUNNO.length);
+                out.flush();
+                return;
+            }
+
             buff=new byte[12+17*s];
             int offset=0;
             External.arraycopy(buff,offset, External.LIST_REP,0, External.LIST_REP.length);
@@ -311,7 +334,7 @@ public class Comm_client implements Runnable {
             offset+=3;
             External.arraycopy(buff, offset, External.ETOILES, 0, External.ETOILES.length);
             offset+=External.ETOILES.length;
-            
+
             for(Player p:partie.joueurs.values()){
                 External.arraycopy(buff, offset,External.PLAYER,0, External.PLAYER.length);
                 offset+=External.PLAYER.length;
@@ -360,9 +383,11 @@ public class Comm_client implements Runnable {
             return;
         }
 
+        short h,l;
+
         synchronized(partie){
-            short h=partie.get_hauteur();
-            short l=partie.get_largeur();
+            h=partie.get_hauteur();
+            l=partie.get_largeur();
         }
 
         buff=new byte[16];
@@ -383,6 +408,15 @@ public class Comm_client implements Runnable {
 
         out.write(buff,0,buff.length);
         out.flush();
+    }
+
+    private void start_game() throws Exception{
+        byte buff[]=new byte[3];
+        int inc=0;
+        while(inc<3){
+            inc+=in.read(buff, inc, 3-inc);
+        }
+
     }
 
 }

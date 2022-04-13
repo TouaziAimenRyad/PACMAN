@@ -2,13 +2,12 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
-import java.util.LinkedList;
 
 public class Serveur {
 
     static byte nb_partie = 0;
     static Object syn_nb_partie = new Object();
-    static HashMap<Byte, Partie> list_parties_nc;
+    static HashMap<Byte, Partie> list_parties_nc= new HashMap<>();
 
     public static void main(String[] args) {
 
@@ -38,6 +37,7 @@ public class Serveur {
         Partie partie =new Partie(n);
         partie.add_player(player);
         list_parties_nc.put(n,partie);
+        nb_partie++;
         return partie;
     }
 

@@ -1,8 +1,8 @@
 public class Player {
 
-    private Byte game = null;
     private String id = null;
     private int port;
+    private Partie partie=null;
 
     void setid(String s) {
         id = s;
@@ -16,17 +16,16 @@ public class Player {
         port = p;
     }
 
-    void setgame(byte g) {
-        game=g;
+    Partie getgame(){
+        return partie;
     }
 
-    Byte getgame(){
-        return game;
+    void setgame(Partie p) {
+        partie=p;
     }
 
     void remove_from_game(){
-        game=null;
-        id=null;
+        partie=null;
     }
 
 }

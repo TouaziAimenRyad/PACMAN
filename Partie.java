@@ -3,9 +3,10 @@ import java.util.HashMap;
 public class Partie {
 
     private byte numero;
-    private boolean start = false;
     private Labyrinthe labyrinthe=new Labyrinthe();
     HashMap<String,Player> joueurs;
+    short nb_start=0;
+
 
     public Partie(byte numero) {
         this.numero = numero;
@@ -24,6 +25,7 @@ public class Partie {
         if(joueurs.size()==255)return false;
         if(joueurs.containsKey(player.getid())) return false;
         joueurs.put(player.getid(),player);
+        player.setgame(this);
         return true;
     } 
 

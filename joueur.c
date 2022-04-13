@@ -36,20 +36,19 @@ il ya des requetes a envoyer avant que la partie commence
 void connection_reply(int connection_socket);
 void regstr_reply(int connection_socket);
 void reg_new_partie(int connection_socket,char *id ,char* udp_port);
-void reg_partie_existant(int connection_socket,char *id ,char* udp_port);
+void reg_partie_existant(int connection_socket,int game,char *id ,char* udp_port);
 void unreg(int connection_socket);
-void lab_size(int connection_socket);
-void palyers_list(int connection_socket);
+void lab_size(int connection_socket,int partie);
+void palyers_list(int connection_socket,int partie);
 void partie_noncom_list(int connection_socket);
 void start(int connection_socket);
 
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]){
     assert(argc==2);
     //generate identifiant sur 8 character soit par scanf soit par random
     char *id=malloc(8); //must be with malloc to avoid problem when passong them as paramaters 
     char* udp_port=malloc(4);
-    id="fhdjs125" ;
+    id="fhdjp125" ;
     udp_port="8000";
     /*char player_info[12];
 
@@ -72,7 +71,7 @@ int main(int argc, char const *argv[])
     /*struct in_addr **addresses=(struct in_addr**)server->h_addr_list;*/
     server_adr.sin_family=AF_INET;
     server_adr.sin_port=htons((uint16_t)atoi(argv[1]));
-    server_adr.sin_addr.s_addr=htonl(INADDR_ANY);  /*(**addresses);*/
+    inet_aton("127.0.0.1",&server_adr.sin_addr);  /*(**addresses);*/
 
     int size=sizeof(server_adr);
 
@@ -80,8 +79,17 @@ int main(int argc, char const *argv[])
 
     if(connect(connection_socket,(struct sockaddr *)&server_adr,(socklen_t)size)==0)
     {
+        int i;
         connection_reply(connection_socket);
-       
+        scanf("%d",&i);
+        printf("pk\n");
+        reg_partie_existant(connection_socket,i,id ,udp_port);
+        regstr_reply(connection_socket);
+        unreg(connection_socket);
+        scanf("%d",&i);
+        palyers_list(connection_socket,i);
+        partie_noncom_list(connection_socket);
+        //partie_noncom_list(connection_socket);
 
         /*selection menu for 2 possibiliies actually it's gonna be more it's gonna containe all the optionam req */
         /*int select;
@@ -148,11 +156,11 @@ int main(int argc, char const *argv[])
 
 void connection_reply(int connection_socket)
 {
-     void * game1=malloc(10);
+        void * buff=malloc(13);
         int inc=0;
         while (inc<10)
         {
-            int r=recv(connection_socket,game1,10-inc,0);
+            int r=recv(connection_socket,buff+inc,10-inc,0);
             if (r==-1)
             {
                 perror("prolem while receiving\n");
@@ -161,16 +169,16 @@ void connection_reply(int connection_socket)
             }
             inc+=r;    
         }
-        int nbr_partie=(int)(*((uint8_t *)(game1+6))) ;
-        printf("%s ttt %d\n",(char*)(game1),nbr_partie);
+        uint8_t nbr_partie=(*((uint8_t *)(buff+6))) ;
+        *(char *)(buff+inc)='\0';
+        printf("%s ttt %d\n",(char*)(buff),nbr_partie);
 
-        for (int i = 0; i <nbr_partie; i++)
+        for (uint8_t i = 0; i <nbr_partie; i++)
         {
             inc=0;
-            void * game2=malloc(12);
             while (inc<12)
             {
-                int r=recv(connection_socket,game2,12-inc,0);
+                int r=recv(connection_socket,buff+inc,12-inc,0);
                 if (r==-1)
                     {
                         perror("prolem while receiving\n");
@@ -179,13 +187,14 @@ void connection_reply(int connection_socket)
                     }
                 inc+=r;    
             }
-            uint8_t num_partie=*((uint8_t *)(game2+6));
-            uint8_t num_joueur_inscr=*((uint8_t *)(game2+6+sizeof(uint8_t)+1));
+            uint8_t num_partie=*((uint8_t *)(buff+6));
+            uint8_t num_joueur_inscr=*((uint8_t *)(buff+8));
             //display results for the user
             printf("%d- game %d with %d player\n",i,num_partie,num_joueur_inscr);
-            printf("%d\n",i);
 
         }
+
+        free(buff);
 
 }
 
@@ -193,31 +202,28 @@ void connection_reply(int connection_socket)
 
 void regstr_reply(int connection_socket)
 {   
-    void *registre_reply1=malloc(5);
+    char *buff=malloc(5);
     int inc=0;
     while (inc<5)
     {
-        int r=recv(connection_socket,registre_reply1,5-inc,0);
+        int r=recv(connection_socket,buff+inc,5-inc,0);
         if (r==-1)
         {
-            perror("prolem while receiving\n");
+            perror("pbrolem while receiving\n");
             close(connection_socket);
             exit(1);
         }
         inc+=r;    
     }
 
-    char registre_reply2[5];
-    strcpy(registre_reply2,(char *)registre_reply1);
 
-    if(strcmp(registre_reply2,"REGNO")==0)
+    if(strncmp(buff,"REGNO",5)==0)
     {
         
-        void* buff=malloc(3);
         inc=0;
         while (inc<3)
         {
-            int r=recv(connection_socket,buff,3-inc,0);
+            int r=recv(connection_socket,buff+inc,3-inc,0);
             if (r==-1)
             {
                 perror("prolem while receiving\n");
@@ -232,13 +238,12 @@ void regstr_reply(int connection_socket)
     }
     else
     {
-        if (strcmp(registre_reply2,"REGOK")==0)
+        if (strncmp(buff,"REGOK",5)==0)
         {
-            void* registre_reply3=malloc(5);
             inc=0;
             while (inc<5)
             {
-                int r=recv(connection_socket,registre_reply3,5-inc,0);
+                int r=recv(connection_socket,buff+inc,5-inc,0);
                 if (r==-1)
                 {
                     perror("prolem while receiving\n");
@@ -248,10 +253,12 @@ void regstr_reply(int connection_socket)
                 inc+=r;    
             }
 
-            printf("accepted in partie num %d\n",*((uint8_t *)(registre_reply3+1)));
+            printf("accepted in partie num %d\n",*((uint8_t *)(buff+1)));
         }
         
     }
+
+    free(buff);
 
 }
 
@@ -260,53 +267,56 @@ void regstr_reply(int connection_socket)
 void reg_new_partie(int connection_socket,char *id ,char* udp_port)
 {
     //id and udp port must be created using malloc so we can avoid them overflowing
-    void * registre_partie=malloc(22);
-    sprintf((char*)registre_partie,"NEWPL %s %s***",id,udp_port);
+    char * buff=malloc(22);
+    sprintf(buff,"NEWPL %s %s***",id,udp_port);
     
-    if (send(connection_socket,registre_partie,22,0)<0)
+    if (send(connection_socket,buff,22,0)<22)
     {
         perror("prolem while sending\n");
         close(connection_socket);
         exit(1);
     }
+
+    free(buff);
 
 }
 
 ///////////////////////////////////////////////////////////////////////
 
-void reg_partie_existant(int connection_socket,char *id ,char* udp_port)
+void reg_partie_existant(int connection_socket,int game,char *id ,char* udp_port)
 {
-    printf("zzzzzzzzzzzzzzzzzzzz reg partie exist\n");
-    void * registre_partie=malloc(24);
-    printf("entrer la partie voulu:\n");
-    int partie_volu;//uint8_t
-    scanf("%d",&partie_volu);
-    sprintf((char *)registre_partie,"%s %s %s ","REGIS",id,udp_port);
-    *((uint8_t *)(registre_partie+6+8+1+4+1))=partie_volu;
-    sprintf((char *)(registre_partie+6+8+1+4+1+1),"%s","***");
-    if (send(connection_socket,registre_partie,24,0)<0)
+    void * buff=malloc(24);
+
+    sprintf((char *)buff,"REGIS %s %s ",id,udp_port);
+    *((uint8_t *)(buff+20))=(uint8_t)game;
+    sprintf((char *)(buff+21),"%s","***");
+    if (send(connection_socket,buff,24,0)<0)
     {
         perror("prolem while sending\n");
         close(connection_socket);
         exit(1);
     }
+
+    free(buff);
 }
 
 //////////////////////////////////////////
 
 void unreg(int connection_socket)
 {
-    if (send(connection_socket,"UNREG***",8,0)<0)
+    if (send(connection_socket,"UNREG***",8,0)<8)
     {
         perror("prolem while sending\n");
         close(connection_socket);
         exit(1);
     }
-    void * unreg_reply=malloc(5);
+
+    char * buff=malloc(5);
     int inc=0;
+
     while (inc<5)
     {
-        int r=recv(connection_socket,unreg_reply,5-inc,0);
+        int r=recv(connection_socket,buff+inc,5-inc,0);
         if (r==-1)
         {   
             perror("prolem while receiving\n");
@@ -315,15 +325,13 @@ void unreg(int connection_socket)
         }
         inc+=r;    
     }
-    char unreg_reply_msg[5];
-    strcpy(unreg_reply_msg,(char*)unreg_reply);
-    if(strcmp(unreg_reply_msg,"UNROK")==0)
+
+    if(strncmp(buff,"UNROK",5)==0)
     {
-        void* buff=malloc(5);
         inc=0;
         while (inc<5)
         {
-            int r=recv(connection_socket,buff,5-inc,0);
+            int r=recv(connection_socket,buff+inc,5-inc,0);
             if (r==-1)
             {
                 perror("prolem while receiving\n");
@@ -335,54 +343,52 @@ void unreg(int connection_socket)
 
         printf("desinscription de partie num %d\n",*((uint8_t *)(buff+1)));
     }
-    else
+    else if(strncmp(buff,"DUNNO",5)==0)
     {
-        if(strcmp(unreg_reply_msg,"DUNNO")==0)
+        printf("vous n'etes pas encore inscrit\n");
+        inc=0;
+        while (inc<3)
         {
-            printf("vous n'etes pas encore inscrit\n");
-            void* buff=malloc(3);
-            inc=0;
-            while (inc<3)
+            int r=recv(connection_socket,buff+inc,3-inc,0);
+            if (r==-1)
             {
-                int r=recv(connection_socket,buff,3-inc,0);
-                if (r==-1)
-                {
-                    perror("prolem while receiving\n");
-                    close(connection_socket);
-                    exit(1);
-                }
-                inc+=r;    
+                perror("prolem while receiving\n");
+                close(connection_socket);
+                exit(1);
             }
-
+            inc+=r;    
         }
+
     }
+
+    free(buff);
 
 }
 
 ///////////////////////////////////////////
 
-void lab_size(int connection_socket)
+void lab_size(int connection_socket,int partie)
 {
-    printf("uuuuuuuuuuuuuuuuuuuuu lab size\n");
+    /*printf("uuuuuuuuuuuuuuuuuuuuu lab size\n");
     printf("quelle partie ?\n");
     int partie;
-    scanf("%d",&partie);
-    void * request_size=malloc(10);
-    sprintf((char*)request_size,"%s","SIZE? ");
-    *((uint8_t*)(request_size+6))=(uint8_t)partie;
-    sprintf((char *)(request_size+6+1),"%s","***");
-    if (send(connection_socket,request_size,10,0)<0)
+    scanf("%d",&partie);*/
+
+    void * buff=malloc(11);
+    sprintf((char*)buff,"%s","SIZE? ");
+    *((uint8_t*)(buff+6))=(uint8_t)partie;
+    sprintf((char *)(buff+7),"%s","***");
+    if (send(connection_socket,buff,10,0)<10)
     {
         perror("prolem while sending\n");
         close(connection_socket);
         exit(1);
     }
 
-    void * size_reply=malloc(5);
     int inc=0;
     while (inc<5)
     {
-        int r=recv(connection_socket,size_reply,5-inc,0);
+        int r=recv(connection_socket,buff+inc,5-inc,0);
         if (r==-1)
         {   
             perror("prolem while receiving\n");
@@ -391,15 +397,13 @@ void lab_size(int connection_socket)
         }
         inc+=r;    
     }
-    char size_reply_msg[5];
-    strcpy(size_reply_msg,(char*)size_reply);
-    if(strcmp(size_reply_msg,"SIZE!")==0)
+
+    if(strncmp(buff,"SIZE!",5)==0)
     {
-        void* buff=malloc(11);
         inc=0;
         while (inc<11)
         {
-            int r=recv(connection_socket,buff,11-inc,0);
+            int r=recv(connection_socket,buff+inc,11-inc,0);
             if (r==-1)
             {
                 perror("prolem while receiving\n");
@@ -415,13 +419,12 @@ void lab_size(int connection_socket)
     }
     else
     {
-        if(strcmp(size_reply_msg,"DUNNO")==0)
+        if(strncmp(buff,"DUNNO",5)==0)
         {
-            void* buff=malloc(3);
             inc=0;
             while (inc<3)
             {
-                int r=recv(connection_socket,buff,3-inc,0);
+                int r=recv(connection_socket,buff+inc,3-inc,0);
                 if (r==-1)
                 {
                     perror("prolem while receiving\n");
@@ -435,31 +438,29 @@ void lab_size(int connection_socket)
         }
     }
     
+    free(buff);
+
 }
 
 ////////////////////////////////////////
 
-void palyers_list(int connection_socket)
+void palyers_list(int connection_socket,int partie)
 {
-    printf("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz list player\n");
-    printf("quelle partie ?\n");
-    int partie;
-    scanf("%d",&partie);
-    void * request_list=malloc(10);
-    sprintf((char*)request_list,"%s","LIST? ");
-    *((uint8_t*)(request_list+6))=(uint8_t)partie;
-    sprintf((char *)(request_list+6+1),"%s","***");
-    if (send(connection_socket,request_list,10,0)<0)
+    void * buff=malloc(10);
+    sprintf((char*)buff,"%s","LIST? ");
+    *((uint8_t*)(buff+6))=(uint8_t)partie;
+    sprintf((char *)(buff+6+1),"%s","***");
+    if (send(connection_socket,buff,10,0)<10)
     {
         perror("prolem while sending\n");
         close(connection_socket);
         exit(1);
     }
-    void * list_reply=malloc(5);
+
     int inc=0;
     while (inc<5)
     {
-        int r=recv(connection_socket,list_reply,5-inc,0);
+        int r=recv(connection_socket,buff+inc,5-inc,0);
         if (r==-1)
         {   
             perror("prolem while receiving\n");
@@ -468,15 +469,52 @@ void palyers_list(int connection_socket)
         }
         inc+=r;    
     }
-    char list_reply_msg[5];
-    strcpy(list_reply_msg,(char*)list_reply);
-    if(strcmp(list_reply_msg,"LIST!")==0)
+
+    if(strncmp(buff,"LIST!",5)==0)
     {
-        void* buff=malloc(7);
         inc=0;
         while (inc<7)
         {
-            int r=recv(connection_socket,buff,7-inc,0);
+            int r=recv(connection_socket,buff+inc,7-inc,0);
+            if (r==-1)
+            {
+                perror("problem while receiving\n");
+                close(connection_socket);
+                exit(1);
+            }
+            inc+=r;    
+        }
+
+        uint8_t nb_player= *((uint8_t *)(buff+3));
+        printf("players: \n");
+        char * player=malloc(18);
+        char* player_id=malloc(9);
+        for (uint8_t i = 0; i < nb_player; i++){
+            inc=0;
+            while (inc<17)
+            {
+                int r=recv(connection_socket,player+inc,17-inc,0);
+                if (r==-1)
+                {   
+                    perror("prolem while receiving\n");
+                    close(connection_socket);
+                    exit(1);
+                }
+                inc+=r;    
+            }
+            strncpy(player_id,player+6,8); 
+            player_id[8]='\0';
+            printf("\t player: %s\n",player_id);                   
+        }
+        free(player_id);
+        free(player);                 
+    }
+    else if(strncmp(buff,"DUNNO",5)==0){
+        
+        inc=0;
+        while (inc<3)
+        {
+            int r=recv(connection_socket,buff+inc,3-inc,0);
             if (r==-1)
             {
                 perror("prolem while receiving\n");
@@ -486,55 +524,11 @@ void palyers_list(int connection_socket)
             inc+=r;    
         }
 
-        int nb_player= *((uint8_t *)(buff+1+1+1));
-        printf("players: \n");
-        for (int i = 0; i < nb_player; i++)
-        {
-            void * player=malloc(17);
-            inc=0;
-            while (inc<17)
-            {
-                int r=recv(connection_socket,player,17-inc,0);
-                if (r==-1)
-                {   
-                    perror("prolem while receiving\n");
-                    close(connection_socket);
-                    exit(1);
-                }
-                inc+=r;    
-            }
-            char* player_id=malloc(8);
-            strcpy(player_id,(char*)(player+5+1)); //!!!!this might have a problem it takes the stars with 
-            printf("\t player: %s\n",(char*)player);
-            free(player);
-            player=NULL;
-            free(player_id);
-            player_id=NULL;
-                                
-        }
-                           
+        printf("partie non trouvé \n");
+        
     }
-    else
-    {
-        if(strcmp(list_reply_msg,"DUNNO")==0)
-        {
-            void* buff=malloc(3);
-            inc=0;
-            while (inc<3)
-            {
-                int r=recv(connection_socket,buff,3-inc,0);
-                if (r==-1)
-                {
-                    perror("prolem while receiving\n");
-                    close(connection_socket);
-                    exit(1);
-                }
-                inc+=r;    
-            }
 
-            printf("partie non trouvé \n");
-        }
-    }
+    free(buff);
 
 }
 
@@ -548,11 +542,12 @@ void partie_noncom_list(int connection_socket)
         close(connection_socket);
         exit(1);
     }
+
     void * game_reply=malloc(10);
     int inc=0;
     while (inc<10)
     {
-        int r=recv(connection_socket,game_reply,10-inc,0);
+        int r=recv(connection_socket,game_reply+inc,10-inc,0);
         if (r==-1)
         {   
             perror("prolem while receiving\n");
@@ -561,15 +556,15 @@ void partie_noncom_list(int connection_socket)
         }
         inc+=r;    
     }
-    int nb_games= *((uint8_t *)(game_reply+5+1));
-    printf("list partie non commencer:\n");
-    for (int i = 0; i < nb_games; i++)
+    uint8_t nb_games=*((uint8_t *)(game_reply+6));
+    printf("list partie non commencer %d:\n",nb_games);
+    void * ogame=malloc(12);
+    for (uint8_t i = 0; i < nb_games; i++)
     {
-        void * ogame=malloc(12);
         inc=0;
         while (inc<12)
         {
-            int r=recv(connection_socket,ogame,12-inc,0);
+            int r=recv(connection_socket,ogame+inc,12-inc,0);
             if (r==-1)
             {   
                 perror("prolem while receiving\n");
@@ -579,12 +574,16 @@ void partie_noncom_list(int connection_socket)
             inc+=r;    
         }
                             
-        int num_partie=*((uint8_t *)(ogame+5+1));
-        int nb_player_per_partie=*((uint8_t *)(ogame+5+1+1+1));
+        int num_partie=*((uint8_t *)(ogame+6));
+        int nb_player_per_partie=*((uint8_t *)(ogame+8));
 
         printf("\t partie num : %d    avec %d joueurs\n",num_partie,nb_player_per_partie);
                             
     }
+
+    free(game_reply);
+    free(ogame);
+
 }
 
 ///////////////////////////////////////////
