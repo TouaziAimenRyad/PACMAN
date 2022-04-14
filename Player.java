@@ -3,6 +3,8 @@ public class Player {
     private String id = null;
     private int port;
     private Partie partie=null;
+    private Short i,j;
+    private Integer score=0;
 
     void setid(String s) {
         id = s;
@@ -28,4 +30,38 @@ public class Player {
         partie=null;
     }
 
+    void set_ij(){
+        Random r=new Random();
+        Labyrinthe L=partie.Labyrinthe;
+        i=r.nextInt(L.get_hauteur());
+        j=r.nextInt(L.get_largeur());
+        while(!L.valid(i,j)){
+            i=r.nextInt(L.get_hauteur());
+            j=r.nextInt(L.get_largeur());
+        }
+    }
+
+    Short get_i(){
+        return  i;
+    }
+
+    Short get_j(){
+        return  j;
+    }
+
+    void set_i(Short i){
+        this.i=i;
+    }
+
+    void set_j(Short j){
+        this.j=j;
+    }
+
+    void incscore(){
+        score++;
+    }
+
+    Integer getscore(){
+        return score;
+    }
 }

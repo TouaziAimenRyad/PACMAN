@@ -12,14 +12,26 @@ public abstract class External {
     static byte[] REGNO = "REGNO***".getBytes();
     static byte[] REGOK = "REGOK ".getBytes();
     static byte[] PLAYER = "PLAYR ".getBytes();
+    static byte[] WELCOM = "WELCO ".getBytes();
+    static byte[] POSIT = "POSIT ".getBytes();
+    static byte[] MOVE = "MOVE! ".getBytes();
+    static byte[] MOVEF = "MOVEF ".getBytes();
+    static byte[] GLIS_reply = "GLIS! ".getBytes();
+    static byte[] GPLYR = "GPLYR ".getBytes();
 
     static final String START = "START";
+    static final String UPMOV = "UPMOV";
+    static final String DOMOV = "DOMOV";
+    static final String LEMOV = "LEMOV";
+    static final String RIMOV = "RIMOV";
+    static final String IQUIT = "IQUIT";
     static final String SIZE_REQ = "SIZE?";
     static final String LIST_REQ = "LIST?";
     static final String GAME_REQ = "GAME?";
     static final String UNREG = "UNREG";
     static final String NEWLP = "NEWPL";
     static final String REGIS = "REGIS";
+    static final String GLIS = "GLIS?";
 
     static public void arraycopy(byte[] src, int offset, byte[] target, int offset_traget, int size) {
         for (int i = 0; i < size; i++) {

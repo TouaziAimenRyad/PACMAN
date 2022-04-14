@@ -5,7 +5,7 @@ public class Partie {
     private byte numero;
     private Labyrinthe labyrinthe=new Labyrinthe();
     HashMap<String,Player> joueurs;
-    short nb_start=0;
+    Byte nb_start=0;
 
 
     public Partie(byte numero) {
@@ -17,8 +17,20 @@ public class Partie {
         return numero;
     }
 
+    byte get_nb_fontomes(){
+        return nb_fontomes;
+    }
+
     byte getnbjoueur() {
         return (byte) joueurs.size();
+    }
+
+    byte getnbstart() {
+        return nb_start;
+    }
+
+    void incnbstart() {
+        nb_start++;
     }
 
     synchronized boolean add_player(Player player){
@@ -43,4 +55,51 @@ public class Partie {
         return labyrinthe.get_largeur();
     }
 
+    short downmove(Short i,Short j,Short d,Player player){
+        Short n=d;
+        char [][] matrice=labyrinthe.get_matrice();
+        i++;
+        while(matrice[i][j]!='*' && d>0 && i<get_hauteur()){
+            if(matrice[i][j]=='@')player.incscore();
+            i++;
+            d--;
+        }
+        return n-d;
+    }
+
+    short leftmove(Short i,Short j,Short d,Player player){
+        Short n=d;
+        char [][] matrice=labyrinthe.get_matrice();
+        j--;
+        while(matrice[i][j]!='*' && d>0 && j>0){
+            if(matrice[i][j]=='@')player.incscore();
+            j--;
+            d--;
+        }
+        return n-d;
+    }
+
+    short rightmove(Short i,Short j,Short d,Player player){
+        Short n=d;
+        char [][] matrice=labyrinthe.get_matrice();
+        j++;
+        while(matrice[i][j]!='*' && d>0 && j<get_largeur()){
+            if(matrice[i][j]=='@')player.incscore();
+            j++;
+            d--;
+        }
+        return n-d;
+    }
+
+    short upmove(Short i,Short j,Short d,Player player){
+        Short n=d;
+        char [][] matrice=labyrinthe.get_matrice();
+        i--;
+        while(matrice[i][j]!='*' && d>0 && i<get_hauteur()){
+            if(matrice[i][j]=='@')player.incscore();
+            i--;
+            d--;
+        }
+        return n-d;
+    }
 }

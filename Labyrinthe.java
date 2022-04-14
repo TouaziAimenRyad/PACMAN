@@ -4,6 +4,7 @@ public class Labyrinthe {
     
     private short hauteur,largeur;
     private char [][] matrice;
+    private byte nb_fontomes;
 
     short get_hauteur(){
         return hauteur;
@@ -13,6 +14,9 @@ public class Labyrinthe {
         return largeur;
     }
 
+    char[][] get_matrice(){
+        return matrice;
+    }
     public Labyrinthe(){
         init((short)50,(short)50);
     }
@@ -24,7 +28,7 @@ public class Labyrinthe {
     public void init(short hauteur,short largeur){
         this.hauteur=hauteur;
         this.largeur=largeur;
-
+        this.nb_fontomes=hauteur*largeur/16;
         matrice=new char[hauteur][largeur];
 
         for(int i=0;i<hauteur;i++){
@@ -77,9 +81,23 @@ public class Labyrinthe {
                 matrice[l][c]=' ';
             }
         }
+        byte n=0;
+        int i,j;
+        while(n<nb_fontomes){
+            i=r.nextInt(L.get_hauteur());
+            j=r.nextInt(L.get_largeur());
+            if(matrice[i][j]==' '){
+                matrice[i][j]='@';
+                n++;
+            }
+        }
 
     }
 
+    public boolean valid(int i,int j){
+        if(i>=hauteur || i<0 || j<0 || j>=largeur || matrice[i][j]=="*")return false;
+        return true;
+    }
     
 
     public static void main(String[] args) {
