@@ -33,15 +33,58 @@ il ya des requetes a envoyer avant que la partie commence
 #include <assert.h>
 #include <netdb.h> 
 
+//aux functions 
+void PrependZeros(char *dest, const char *src, unsigned minimal_width);
+void PrependZeros(char *dest, const char *src, unsigned minimal_width) {
+  size_t len = strlen(src);
+  size_t zeros = (len > minimal_width) ? 0 : minimal_width - len;
+  memset(dest, '0', zeros);
+  strcpy(dest + zeros, src);
+}
+
+char* remove_hashtags(char* src);
+char * remove_hashtags(char*src)
+{   
+    int cpt=0;
+    for (int i = 0; i < 15; i++)
+    {
+        if (src[i]=='#')
+        {
+            cpt++;
+        }
+        
+    }
+    int ip_len=strlen(src)-cpt;
+    char * d=malloc(ip_len);
+    strncpy(d,src,ip_len);
+    return d;
+
+    
+
+}
+
+
+//add the possiilite of returnning the received values 
 void connection_reply(int connection_socket);
 void regstr_reply(int connection_socket);
 void reg_new_partie(int connection_socket,char *id ,char* udp_port);
-void reg_partie_existant(int connection_socket,int game,char *id ,char* udp_port);
+void reg_partie_existant(int connection_socket,char *id ,char* udp_port,int game);
 void unreg(int connection_socket);
 void lab_size(int connection_socket,int partie);
 void palyers_list(int connection_socket,int partie);
 void partie_noncom_list(int connection_socket);
+//debut de paritie -------------------------------
 void start(int connection_socket);
+void start_reply(int connection_socket);
+//deroulemnt de partie ----------------------------
+void move_up(int connection_socket,int dist);
+void move_down(int connection_socket,int dist);
+void move_left(int connection_socket,int dist);
+void move_right(int connection_socket,int dist);
+void move_reply(int connection_socket);
+void quit(int connection_socket);
+void get_list_req(int connection_socket);
+void get_list_res(int connection_socket);
 
 int main(int argc, char const *argv[]){
     assert(argc==2);
@@ -83,7 +126,7 @@ int main(int argc, char const *argv[]){
         connection_reply(connection_socket);
         scanf("%d",&i);
         printf("pk\n");
-        reg_partie_existant(connection_socket,i,id ,udp_port);
+        reg_partie_existant(connection_socket,id ,udp_port,i);
         regstr_reply(connection_socket);
         unreg(connection_socket);
         scanf("%d",&i);
@@ -165,6 +208,7 @@ void connection_reply(int connection_socket)
             {
                 perror("prolem while receiving\n");
                 close(connection_socket);
+                free(buff);
                 exit(1);
             }
             inc+=r;    
@@ -183,6 +227,7 @@ void connection_reply(int connection_socket)
                     {
                         perror("prolem while receiving\n");
                         close(connection_socket);
+                        free(buff);
                         exit(1);
                     }
                 inc+=r;    
@@ -211,6 +256,7 @@ void regstr_reply(int connection_socket)
         {
             perror("pbrolem while receiving\n");
             close(connection_socket);
+            free(buff);
             exit(1);
         }
         inc+=r;    
@@ -228,6 +274,7 @@ void regstr_reply(int connection_socket)
             {
                 perror("prolem while receiving\n");
                 close(connection_socket);
+                free(buff);
                 exit(1);
             }
             inc+=r;    
@@ -248,6 +295,7 @@ void regstr_reply(int connection_socket)
                 {
                     perror("prolem while receiving\n");
                     close(connection_socket);
+                    free(buff);
                     exit(1);
                 }
                 inc+=r;    
@@ -274,6 +322,7 @@ void reg_new_partie(int connection_socket,char *id ,char* udp_port)
     {
         perror("prolem while sending\n");
         close(connection_socket);
+        free(buff);
         exit(1);
     }
 
@@ -283,17 +332,18 @@ void reg_new_partie(int connection_socket,char *id ,char* udp_port)
 
 ///////////////////////////////////////////////////////////////////////
 
-void reg_partie_existant(int connection_socket,int game,char *id ,char* udp_port)
+void reg_partie_existant(int connection_socket,char *id ,char* udp_port,int game)
 {
     void * buff=malloc(24);
 
     sprintf((char *)buff,"REGIS %s %s ",id,udp_port);
     *((uint8_t *)(buff+20))=(uint8_t)game;
     sprintf((char *)(buff+21),"%s","***");
-    if (send(connection_socket,buff,24,0)<0)
+    if (send(connection_socket,buff,24,0)<24)
     {
         perror("prolem while sending\n");
         close(connection_socket);
+        free(buff);
         exit(1);
     }
 
@@ -321,6 +371,7 @@ void unreg(int connection_socket)
         {   
             perror("prolem while receiving\n");
             close(connection_socket);
+            free(buff);
             exit(1);
         }
         inc+=r;    
@@ -336,6 +387,7 @@ void unreg(int connection_socket)
             {
                 perror("prolem while receiving\n");
                 close(connection_socket);
+                free(buff);
                 exit(1);
             }
             inc+=r;    
@@ -354,6 +406,7 @@ void unreg(int connection_socket)
             {
                 perror("prolem while receiving\n");
                 close(connection_socket);
+                free(buff);
                 exit(1);
             }
             inc+=r;    
@@ -369,10 +422,6 @@ void unreg(int connection_socket)
 
 void lab_size(int connection_socket,int partie)
 {
-    /*printf("uuuuuuuuuuuuuuuuuuuuu lab size\n");
-    printf("quelle partie ?\n");
-    int partie;
-    scanf("%d",&partie);*/
 
     void * buff=malloc(11);
     sprintf((char*)buff,"%s","SIZE? ");
@@ -382,6 +431,7 @@ void lab_size(int connection_socket,int partie)
     {
         perror("prolem while sending\n");
         close(connection_socket);
+        free(buff);
         exit(1);
     }
 
@@ -393,6 +443,7 @@ void lab_size(int connection_socket,int partie)
         {   
             perror("prolem while receiving\n");
             close(connection_socket);
+            free(buff);
             exit(1);
         }
         inc+=r;    
@@ -408,6 +459,7 @@ void lab_size(int connection_socket,int partie)
             {
                 perror("prolem while receiving\n");
                 close(connection_socket);
+                free(buff);
                 exit(1);
             }
             inc+=r;    
@@ -429,6 +481,7 @@ void lab_size(int connection_socket,int partie)
                 {
                     perror("prolem while receiving\n");
                     close(connection_socket);
+                    free(buff);
                     exit(1);
                 }
                 inc+=r;    
@@ -454,6 +507,7 @@ void palyers_list(int connection_socket,int partie)
     {
         perror("prolem while sending\n");
         close(connection_socket);
+        free(buff);
         exit(1);
     }
 
@@ -465,6 +519,7 @@ void palyers_list(int connection_socket,int partie)
         {   
             perror("prolem while receiving\n");
             close(connection_socket);
+            free(buff);
             exit(1);
         }
         inc+=r;    
@@ -480,6 +535,7 @@ void palyers_list(int connection_socket,int partie)
             {
                 perror("problem while receiving\n");
                 close(connection_socket);
+                free(buff);
                 exit(1);
             }
             inc+=r;    
@@ -498,6 +554,7 @@ void palyers_list(int connection_socket,int partie)
                 {   
                     perror("prolem while receiving\n");
                     close(connection_socket);
+                    free(buff);
                     exit(1);
                 }
                 inc+=r;    
@@ -519,6 +576,7 @@ void palyers_list(int connection_socket,int partie)
             {
                 perror("prolem while receiving\n");
                 close(connection_socket);
+                free(buff);
                 exit(1);
             }
             inc+=r;    
@@ -536,7 +594,7 @@ void palyers_list(int connection_socket,int partie)
 
 void partie_noncom_list(int connection_socket)
 {
-    if (send(connection_socket,"GAME?***",8,0)<0)
+    if (send(connection_socket,"GAME?***",8,0)<8)
     {
         perror("prolem while sending\n");
         close(connection_socket);
@@ -552,6 +610,7 @@ void partie_noncom_list(int connection_socket)
         {   
             perror("prolem while receiving\n");
             close(connection_socket);
+            free(game_reply);
             exit(1);
         }
         inc+=r;    
@@ -569,6 +628,7 @@ void partie_noncom_list(int connection_socket)
             {   
                 perror("prolem while receiving\n");
                 close(connection_socket);
+                free(ogame);
                 exit(1);
             }
             inc+=r;    
@@ -588,14 +648,370 @@ void partie_noncom_list(int connection_socket)
 
 ///////////////////////////////////////////
 
+//debut de partie ------------------------------------------------------------------------------------------------------------------
+
 void start(int connection_socket)
 {
-    if (send(connection_socket,"START***",8,0)<0)
+    if (send(connection_socket,"START***",8,0)<8)
     {
         perror("prolem while sending\n");
         close(connection_socket);
         exit(1);
     }
 
+
+}
+
+void start_reply(int connection_socket)
+{
+    int size=5+1+2+2+1+15+4+3+6;
+    void * reply=malloc(size);
+    int inc=0;
+    while (inc<size)
+    {
+        int r=recv(connection_socket,reply+inc,size-inc,0);
+        if (r==-1)
+        {   
+            perror("prolem while receiving\n");
+            close(connection_socket);
+            exit(1);
+        }
+        inc+=r;    
+    }
+    uint8_t n_partie=*((uint8_t *)(reply+6));
+    uint16_t h=*((uint16_t *)(reply+6+2));
+    uint16_t w=*((uint16_t *)(reply+6+2+3));
+    uint8_t n_fantom=*((uint8_t *)(reply+6+2+3+3));
+    char *ip=malloc(15);
+    strncpy(ip,(char *)(reply+6+2+3+3+2),15);
+    char *port=malloc(4);
+    strncpy(ip,(char *)(reply+6+2+3+3+2+16),4);
+    
+    char *real_ip=remove_hashtags(ip);
+
+    free(ip);
+    ip=NULL;
+    free(port);
+    port=NULL;
+
+    free(reply);
+    reply=NULL;
+
+    int size_pos=5+8+3+3+3+3;
+    void *reply_pos=malloc(size_pos);
+    inc =0;
+    while (inc<size)
+    {
+        int r=recv(connection_socket,reply_pos+inc,size_pos-inc,0);
+        if (r==-1)
+        {   
+            perror("prolem while receiving\n");
+            close(connection_socket);
+            exit(1);
+        }
+        inc+=r;    
+    }
+    char *id =malloc(8);
+    strncpy(id,(char *)(reply_pos+6),8);
+    char *x=malloc(3);
+    strncpy(x,(char *)(reply_pos+6+9),3);
+    char *y=malloc(3);
+    strncpy(y,(char *)(reply_pos+6+9+4),3);
+    
+    free(reply_pos);
+    reply_pos=NULL;
+    
+}
+
+//deroulement de partie --------------------------------------------------------------
+
+void move_up(int connection_socket,int dist)
+{   
+    char * d=malloc(3);
+    char *buff=malloc(3);
+    sprintf(buff,"%d",dist);
+    PrependZeros(d,buff,3);
+
+    char * req= malloc(12);
+    sprintf(req,"%s %s***","UPMOV",d);
+    if (send(connection_socket,req,12,0)<12)
+    {
+        perror("prolem while sending\n");
+        close(connection_socket);
+        exit(1);
+    }
+
+    free(req);
+    req=NULL;
+
+}
+
+//////////////////////////////////////
+
+void move_down(int connection_socket,int dist)
+{   
+    char * d=malloc(3);
+    char *buff=malloc(3);
+    sprintf(buff,"%d",dist);
+    PrependZeros(d,buff,3);
+
+    char * req= malloc(12);
+    sprintf(req,"%s %s***","DOMOV",d);
+    if (send(connection_socket,req,12,0)<12)
+    {
+        perror("prolem while sending\n");
+        close(connection_socket);
+        exit(1);
+    }
+
+    free(d);
+    d=NULL;
+    free(buff);
+    buff=NULL;
+    free(req);
+    req=NULL;
+
+}
+
+////////////////////////////////////////
+
+void move_left(int connection_socket,int dist)
+{   
+    char * d=malloc(3);
+    char *buff=malloc(3);
+    sprintf(buff,"%d",dist);
+    PrependZeros(d,buff,3);
+
+    char * req= malloc(12);
+    sprintf(req,"%s %s***","LEMOV",d);
+    if (send(connection_socket,req,12,0)<12)
+    {
+        perror("prolem while sending\n");
+        close(connection_socket);
+        exit(1);
+    }
+
+    free(d);
+    d=NULL;
+    free(buff);
+    buff=NULL;
+    free(req);
+    req=NULL;
+
+}
+
+//////////////////////////////////
+
+void move_right(int connection_socket,int dist)
+{   
+    char * d=malloc(3);
+    char *buff=malloc(3);
+    sprintf(buff,"%d",dist);
+    PrependZeros(d,buff,3);
+
+    char * req= malloc(12);
+    sprintf(req,"%s %s***","RIMOV",d);
+    if (send(connection_socket,req,12,0)<12)
+    {
+        perror("prolem while sending\n");
+        close(connection_socket);
+        exit(1);
+    }
+
+    free(d);
+    d=NULL;
+    free(buff);
+    buff=NULL;
+    free(req);
+    req=NULL;
+
+
+}
+
+//////////////////////////////////////
+
+void reply_move(int connection_socket)
+{
+    char * reply_msg=malloc(5);
+    int inc =0;
+    while (inc<5)
+    {
+        int r=recv(connection_socket,reply_msg+inc,5-inc,0);
+        if (r==-1)
+        {   
+            perror("prolem while receiving\n");
+            close(connection_socket);
+            exit(1);
+        }
+        inc+=r;    
+    }
+    if(strcmp("MOVE!",(char*)reply_msg)==0)
+    {
+        void *reply_mv=malloc(11);
+        inc =0;
+        while (inc<11)
+        {
+            int r=recv(connection_socket,reply_mv+inc,11-inc,0);
+            if (r==-1)
+            {   
+                perror("prolem while receiving\n");
+                close(connection_socket);
+                exit(1);
+            }
+            inc+=r;    
+        }
+        char* new_x=malloc(3);
+        char* new_y=malloc(3);
+        strncpy(new_x,(char*)(reply_mv+1),3);
+        strncpy(new_y,(char*)(reply_mv+1+4),3);
+
+        free(new_x);new_x=NULL;
+        free(new_y);new_y=NULL;
+        free(reply_mv);
+        reply_mv=NULL;
+
+    }
+    else
+    {
+        if(strcmp("MOVEF",(char*)reply_msg)==0)
+        {
+            void *reply_mvf=malloc(15);
+            inc =0;
+            while (inc<15)
+            {
+                int r=recv(connection_socket,reply_mvf+inc,15-inc,0);
+                if (r==-1)
+                {   
+                    perror("prolem while receiving\n");
+                    close(connection_socket);
+                    exit(1);
+                }
+                inc+=r;    
+            }
+            char* new_x=malloc(3);
+            char* new_y=malloc(3);
+            char* port=malloc(4);
+            strncpy(new_x,(char*)(reply_mvf+1),3);
+            strncpy(new_y,(char*)(reply_mvf+1+4),3);
+            strncpy(port,(char*)(reply_mvf+1+4+4),4);
+
+            free(new_x);new_x=NULL;
+            free(new_y);new_y=NULL;
+            free(port);port=NULL;
+            free(reply_mvf);
+            reply_mvf=NULL;
+
+
+
+        }
+    }
+
+    free(reply_msg);
+    reply_msg=NULL;
+
+}
+
+///////////////////////////////////
+void quit(int connection_socket)
+{
+    if (send(connection_socket,"IQUIT***",8,0)<8)
+    {
+        perror("prolem while sending\n");
+        close(connection_socket);
+        exit(1);
+    }
+    char * reply=malloc(8);
+    int inc =0;
+    while (inc<8)
+    {
+        int r=recv(connection_socket,reply+inc,8-inc,0);
+        if (r==-1)
+        {   
+            perror("prolem while receiving\n");
+            close(connection_socket);
+            exit(1);
+        }
+        inc+=r;    
+    }
+
+    free(reply);
+    reply=NULL;
+}
+
+
+/////////////////////////////////////////////////
+
+void get_list(int connection_socket)
+{
+    if (send(connection_socket,"GLIS?***",8,0)<8)
+    {
+        perror("prolem while sending\n");
+        close(connection_socket);
+        exit(1);
+    }
+    
+
+}
+void get_list_res(int connection_socket)
+{
+    void* reply=malloc(10);
+    int inc =0;
+    while (inc<10)
+    {
+        int r=recv(connection_socket,reply+inc,10-inc,0);
+        if (r==-1)
+        {   
+            perror("prolem while receiving\n");
+            close(connection_socket);
+            exit(1);
+        }
+        inc+=r;    
+    }
+    uint8_t nb_player=*(uint8_t *)(reply+6);
+    for (int i = 0; i < nb_player; i++)
+    {
+        int size=6+9+4+4+4+3;
+        void * player_reply=malloc(size);
+        inc =0;
+        while (inc<size)
+        {
+            int r=recv(connection_socket,player_reply+inc,size-inc,0);
+            if (r==-1)
+            {      
+                perror("prolem while receiving\n");
+                close(connection_socket);
+                exit(1);
+            }
+            inc+=r;    
+        }
+        char * id=malloc(8);
+        strncpy(id,(char*)(player_reply+6),8);
+        char * x=malloc(3);
+        strncpy(x,(char*)(player_reply+6+9),3);
+        char * y=malloc(3);
+        strncpy(y,(char*)(player_reply+6+9+4),3);
+        char * point=malloc(4);
+        strncpy(point,(char*)(player_reply+6+9+4+4),4);
+
+        free(id);
+        id=NULL;
+        free(x);
+        x=NULL;
+        free(y);
+        y=NULL;
+        free(point);
+        point=NULL;
+        free(player_reply);
+        player_reply=NULL;
+    }
+    
+
+    free(reply);
+    reply=NULL;
+
+}
+
+void muilti_def_mail(char * ip_multicast)
+{
 
 }
