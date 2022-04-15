@@ -18,6 +18,7 @@ public abstract class External {
     static byte[] MOVEF = "MOVEF ".getBytes();
     static byte[] GLIS_reply = "GLIS! ".getBytes();
     static byte[] GPLYR = "GPLYR ".getBytes();
+    static byte[] GODEBYE = "GOBYE***".getBytes();
 
     static final String START = "START";
     static final String UPMOV = "UPMOV";
