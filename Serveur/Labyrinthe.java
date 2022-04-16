@@ -29,7 +29,7 @@ public class Labyrinthe {
     public void init(short hauteur, short largeur) {
         this.hauteur = hauteur;
         this.largeur = largeur;
-        this.nb_fontomes = hauteur * largeur / 16;
+        this.nb_fontomes = (byte)(hauteur * largeur / 16);
         matrice = new char[hauteur][largeur];
 
         for (int i = 0; i < hauteur; i++) {

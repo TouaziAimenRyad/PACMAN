@@ -1,3 +1,5 @@
+import java.util.Random;
+
 public class Player {
 
     private String id = null;
@@ -32,12 +34,11 @@ public class Player {
 
     void set_ij() {
         Random r = new Random();
-        Labyrinthe L = partie.Labyrinthe;
-        i = r.nextInt(L.get_hauteur());
-        j = r.nextInt(L.get_largeur());
-        while (!L.valid(i, j)) {
-            i = r.nextInt(L.get_hauteur());
-            j = r.nextInt(L.get_largeur());
+        i = (short)r.nextInt(partie.get_hauteur());
+        j = (short)r.nextInt(partie.get_largeur());
+        while (!partie.valid(i, j)) {
+            i = (short)r.nextInt(partie.get_hauteur());
+            j = (short)r.nextInt(partie.get_largeur());
         }
     }
 

@@ -85,7 +85,7 @@ public class Partie {
             i++;
             d--;
         }
-        return n - d;
+        return (short)(n - d);
     }
 
     short leftmove(Short i, Short j, Short d, Player player) {
@@ -98,7 +98,7 @@ public class Partie {
             j--;
             d--;
         }
-        return n - d;
+        return (short)(n - d);
     }
 
     short rightmove(Short i, Short j, Short d, Player player) {
@@ -111,7 +111,7 @@ public class Partie {
             j++;
             d--;
         }
-        return n - d;
+        return (short)(n - d);
     }
 
     short upmove(Short i, Short j, Short d, Player player) {
@@ -124,6 +124,10 @@ public class Partie {
             i--;
             d--;
         }
-        return n - d;
+        return (short)(n - d);
+    }
+
+    public boolean valid(int i, int j) {
+        return labyrinthe.valid(i, j);
     }
 }
