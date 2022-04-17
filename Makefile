@@ -1,24 +1,30 @@
   CC=gcc
   JV=javac
-  INCLUDE=Client/include
+  INCLUDE=Joueur/includes
   CFLAGS+= -g -o1 -Wall -Wextra -pthread -I $(INCLUDE)
   
-  all : client Serveur.class
+  all : joueur Serveur.class
 
-  client : functions_aux.o client.o req_aft_start.o req_bef_start.o
-	$(CC) -o client client.o req_aft_start.o req_bef_start.o functions_aux.o
+  joueur : aux.o joueur.o joueuer_multicast.o joueur_avant_deb.o joueur_debut.o joueur_pendant.o
+	$(CC) -o joueur joueur.o joueuer_multicast.o joueur_avant_deb.o aux.o joueur_debut.o joueur_pendant.o
   
-  client.o : Client/src/client.c
-	$(CC) $(CFLAGS) -o client.o -c Client/src/client.c
+  joueur.o : Joueur/joueur.c
+	$(CC) $(CFLAGS) -o joueur.o -c Joueur/joueur.c
 
-  req_aft_start.o : Client/src/req_aft_start.c
-	$(CC) $(CFLAGS) -o req_aft_start.o -c Client/src/req_aft_start.c
+  joueur_avant_deb.o : Joueur/src/joueur_avant_deb.c
+	$(CC) $(CFLAGS) -o joueur_avant_deb.o -c Joueur/src/joueur_avant_deb.c
 
-  req_bef_start.o : Client/src/req_bef_start.c
-	$(CC) $(CFLAGS) -o req_bef_start.o -c Client/src/req_bef_start.c
+  joueur_debut.o : Joueur/src/joueur_debut.c
+	$(CC) $(CFLAGS) -o joueur_debut.o -c Joueur/src/joueur_debut.c
 
-  functions_aux.o : Client/src/functions_aux.c
-	$(CC) $(CFLAGS) -o functions_aux.o -c Client/src/functions_aux.c
+  joueur_pendant.o : Joueur/src/joueur_pendant.c
+	$(CC) $(CFLAGS) -o joueur_pendant.o -c Joueur/src/joueur_pendant.c
+
+  joueuer_multicast.o : Joueur/src/joueuer_multicast.c
+	$(CC) $(CFLAGS) -o joueuer_multicast.o -c Joueur/src/joueuer_multicast.c
+
+  aux.o : Joueur/src/aux.c
+	$(CC) $(CFLAGS) -o aux.o -c Joueur/src/aux.c
 
   Serveur.class : Serveur/Serveur.java
 	$(JV) -cp Serveur/ Serveur/Serveur.java

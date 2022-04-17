@@ -12,6 +12,7 @@
 #include <assert.h>
 #include <netdb.h> 
 
+#include "aux.h"
 
 #ifndef JOUEUR_PENDANT_H_
 #define JOUEUR_PENDANT_H_

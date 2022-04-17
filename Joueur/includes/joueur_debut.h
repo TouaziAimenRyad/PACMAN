@@ -12,12 +12,14 @@
 #include <assert.h>
 #include <netdb.h> 
 
+#include "aux.h"
 
-#ifndef JOUEUR_MULTICAST_H_
-#define JOUEUR_MULTICAST_H_
+#ifndef JOUEUR_DEB_H_
+#define JOUEUR_DEB_H_
 
-void abonner_multi(char * ip_multicast,char* port_multicast);//after start reply we call this to inter the multicast ring
-void recv_muilti_def(int multicast_sock);
+void start(int connection_socket);
+void start_reply(int connection_socket);
 
 
-#endif /* A1E10F8F_3F6D_4834_9495_0D42C5D81F27 */
+
+#endif /* E95B3004_4127_44CA_A5B9_44B192580BE7 */

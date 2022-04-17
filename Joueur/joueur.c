@@ -19,30 +19,8 @@ recevoire n fois [OGAME m s***] m s sur 1 octet
 envoyer [START***] pour commencer la partie 
 il ya des requetes a envoyer avant que la partie commence 
 */
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <string.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <assert.h>
-#include <netdb.h> 
-#include "./includes/aux.h"
-#include "./includes/joueur_avant_deb.h"
-#include "./includes/joueur_debut.h"
-#include "./includes/joueur_multicast.h"
-#include "./includes/joueur_pendant.h"
-#include "./src/aux.c"
-#include "./src/joueur_avant_deb.c"
-#include "./src/joueur_debut.c"
-#include "./src/joueuer_multicast.c"
-#include "./src/joueur_pendant.c"
 
+#include "joueur.h"
 //aux functions 
 
 

@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <netdb.h> 
+#include "aux.h"
 
 #ifndef JOUEUR_AVANT_DEB_H_
 #define JOUEUR_AVANT_DEB_H_

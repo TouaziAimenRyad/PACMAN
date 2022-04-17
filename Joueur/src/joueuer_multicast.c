@@ -1,5 +1,5 @@
 
-#include "../includes/joueur_multicast.h"
+#include "joueur_multicast.h"
 void abonner_multi(char * ip_multicast,char* port_multicast)
 {
     printf("abonner multicast\n");

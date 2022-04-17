@@ -1,5 +1,5 @@
-#include "../includes/aux.h"
-#include "../includes/joueur_debut.h"
+
+#include "joueur_debut.h"
 
 void start(int connection_socket)
 {

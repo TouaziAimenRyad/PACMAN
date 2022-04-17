@@ -85,8 +85,8 @@ public class Labyrinthe {
         byte n = 0;
         int i, j;
         while (n < nb_fontomes) {
-            i = r.nextInt(L.get_hauteur());
-            j = r.nextInt(L.get_largeur());
+            i = r.nextInt(this.get_hauteur());
+            j = r.nextInt(this.get_largeur());
             if (matrice[i][j] == ' ') {
                 matrice[i][j] = '@';
                 n++;
@@ -96,7 +96,7 @@ public class Labyrinthe {
     }
 
     public boolean valid(int i, int j) {
-        if (i >= hauteur || i < 0 || j < 0 || j >= largeur || matrice[i][j] == "*")
+        if (i >= hauteur || i < 0 || j < 0 || j >= largeur || matrice[i][j] == '*')
             return false;
         return true;
     }

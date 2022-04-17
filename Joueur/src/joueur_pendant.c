@@ -1,5 +1,5 @@
-#include "../includes/aux.h"
-#include "../includes/joueur_pendant.h"
+#include "joueur_pendant.h"
+
 void move_up(int connection_socket,int dist)
 {   
     printf("move up\n");

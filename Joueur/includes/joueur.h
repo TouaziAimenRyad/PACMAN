@@ -1,3 +1,6 @@
+#ifndef JOUEUR
+#define JOUEUR
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -11,13 +14,10 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <netdb.h> 
+#include "aux.h"
+#include "joueur_avant_deb.h"
+#include "joueur_debut.h"
+#include "joueur_multicast.h"
+#include "joueur_pendant.h"
 
-#ifndef JOUEUR_DEB_H_
-#define JOUEUR_DEB_H_
-
-void start(int connection_socket);
-void start_reply(int connection_socket);
-
-
-
-#endif /* E95B3004_4127_44CA_A5B9_44B192580BE7 */
+#endif 

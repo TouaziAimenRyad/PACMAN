@@ -1,5 +1,5 @@
 
-#include "../includes/joueur_avant_deb.h"
+#include "joueur_avant_deb.h"
 void connection_reply(int connection_socket)
 {
         printf("connection reply\n");
