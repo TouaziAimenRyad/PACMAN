@@ -66,7 +66,7 @@ public class Partie {
 
     String get_ip_mult() {
         String ip = multicast.getAddress().getHostAddress();
-        for (int i = 0; i < 15; i++)
+        for (int i = ip.length(); i < 15; i++)
             ip += "#";
         return ip;
     }

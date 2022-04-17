@@ -37,7 +37,7 @@ int main(int argc, char const *argv[]){
     //generate identifiant sur 8 character soit par scanf soit par random
     char *id=malloc(8); //must be with malloc to avoid problem when passong them as paramaters 
     char* udp_port=malloc(4);
-    id="fhdjp125" ;
+    id="fhdjp128" ;
     udp_port="8000";
     /*char player_info[12];
 
@@ -69,7 +69,43 @@ int main(int argc, char const *argv[]){
     if(connect(connection_socket,(struct sockaddr *)&server_adr,(socklen_t)size)==0)
     {
         int i;
+        int partie;
+    /*
+        scanf("%d",&partie);
         connection_reply(connection_socket);
+        reg_partie_existant(connection_socket,id ,udp_port,partie);
+        regstr_reply(connection_socket);
+        start(connection_socket);
+        start_reply(connection_socket);*/
+
+
+
+
+
+
+        connection_reply(connection_socket);
+        reg_new_partie(connection_socket,id ,udp_port);
+        regstr_reply(connection_socket);
+        scanf("%d",&partie);
+        start(connection_socket);
+        start_reply(connection_socket);
+
+        move_up(connection_socket,5);
+        reply_move(connection_socket);
+
+        move_down(connection_socket,5);
+        reply_move(connection_socket);
+
+        move_left(connection_socket,5);
+        reply_move(connection_socket);
+
+        move_right(connection_socket,5);
+        reply_move(connection_socket);
+
+        get_list(connection_socket);
+        get_list_res(connection_socket);
+
+        quit(connection_socket);
       /*  scanf("%d",&i);
         printf("pk\n");
         reg_partie_existant(connection_socket,id ,udp_port,i);

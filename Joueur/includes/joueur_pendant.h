@@ -21,7 +21,7 @@ void move_up(int connection_socket,int dist);
 void move_down(int connection_socket,int dist);
 void move_left(int connection_socket,int dist);
 void move_right(int connection_socket,int dist);
-void move_reply(int connection_socket);
+void reply_move(int connection_socket);
 void quit(int connection_socket);
 void get_list_req(int connection_socket);
 void get_list_res(int connection_socket);

@@ -137,6 +137,7 @@ void move_right(int connection_socket,int dist)
 
 //////////////////////////////////////
 
+//bdlnaha
 void reply_move(int connection_socket)
 {
     printf("reply move\n");
@@ -153,9 +154,9 @@ void reply_move(int connection_socket)
             close(connection_socket);
             exit(1);
         }
-        inc+=r;    
+        inc+=r; 
     }
-    if(strcmp("MOVE!",(char*)reply_msg)==0)
+    if(strncmp("MOVE!",(char*)reply_msg,5)==0)
     {
         void *reply_mv=malloc(11);
         inc =0;
@@ -178,7 +179,7 @@ void reply_move(int connection_socket)
         char* new_y=malloc(3);
         strncpy(new_x,(char*)(reply_mv+1),3);
         strncpy(new_y,(char*)(reply_mv+1+4),3);
-
+        printf("x= %d, y=%d\n",atoi(new_x),atoi(new_y));
         free(new_x);new_x=NULL;
         free(new_y);new_y=NULL;
         free(reply_mv);
@@ -187,13 +188,13 @@ void reply_move(int connection_socket)
     }
     else
     {
-        if(strcmp("MOVEF",(char*)reply_msg)==0)
+        if(strncmp("MOVEF",(char*)reply_msg,5)==0)
         {
-            void *reply_mvf=malloc(15);
+            void *reply_mvf=malloc(16);
             inc =0;
-            while (inc<15)
+            while (inc<16)
             {
-                int r=recv(connection_socket,reply_mvf+inc,15-inc,0);
+                int r=recv(connection_socket,reply_mvf+inc,16-inc,0);
                 if (r==-1)
                 {   
                     perror("prolem while receiving\n");
@@ -208,14 +209,15 @@ void reply_move(int connection_socket)
             }
             char* new_x=malloc(3);
             char* new_y=malloc(3);
-            char* port=malloc(4);
+            char* point=malloc(4);
             strncpy(new_x,(char*)(reply_mvf+1),3);
             strncpy(new_y,(char*)(reply_mvf+1+4),3);
-            strncpy(port,(char*)(reply_mvf+1+4+4),4);
+            strncpy(point,(char*)(reply_mvf+1+4+4),4);
 
+            printf("x= %d, y=%d, p=%d\n",atoi(new_x),atoi(new_y),atoi(point));
             free(new_x);new_x=NULL;
             free(new_y);new_y=NULL;
-            free(port);port=NULL;
+            free(point);point=NULL;
             free(reply_mvf);
             reply_mvf=NULL;
 
@@ -224,7 +226,7 @@ void reply_move(int connection_socket)
         }
         else
         {
-            if(strcmp("GOBYE",(char*)reply_msg)==0)
+            if(strncmp("GOBYE",(char*)reply_msg,5)==0)
             {
                 void *bye=malloc(3);
                 inc =0;
@@ -316,7 +318,7 @@ void get_list_res(int connection_socket)
         }
         inc+=r;    
     }
-    if(strcmp(reply,"GLIS!")==0)
+    if(strncmp(reply,"GLIS!",5)==0)
     {
         void * glis=malloc(5);
         inc =0;
@@ -336,10 +338,15 @@ void get_list_res(int connection_socket)
             inc+=r;    
         }
         uint8_t nb_player=*(uint8_t *)(glis+1);
+        printf("nb joueurs=%u\n",nb_player);
+        char * id=malloc(8);
+        char * x=malloc(3);
+        char * y=malloc(3);
+        char * point=malloc(4);
+        int size=6+9+4+4+4+3;
+        void * player_reply=malloc(size);
         for (int i = 0; i < nb_player; i++)
         {
-            int size=6+9+4+4+4+3;
-            void * player_reply=malloc(size);
             inc =0;
             while (inc<size)
             {
@@ -358,32 +365,28 @@ void get_list_res(int connection_socket)
                 }
                 inc+=r;    
             }
-            char * id=malloc(8);
             strncpy(id,(char*)(player_reply+6),8);
-            char * x=malloc(3);
             strncpy(x,(char*)(player_reply+6+9),3);
-            char * y=malloc(3);
             strncpy(y,(char*)(player_reply+6+9+4),3);
-            char * point=malloc(4);
             strncpy(point,(char*)(player_reply+6+9+4+4),4);
-
-            free(id);
-            id=NULL;
-            free(x);
-            x=NULL;
-            free(y);
-            y=NULL;
-            free(point);
-            point=NULL;
-            free(player_reply);
-            player_reply=NULL;
+            printf("joueur %s in x= %d, y=%d with point= %d\n",id,atoi(x),atoi(y),atoi(point));
         }
+        free(id);
+        id=NULL;
+        free(x);
+        x=NULL;
+        free(y);
+        y=NULL;
+        free(point);
+        point=NULL;
+        free(player_reply);
+        player_reply=NULL;
         free(glis);
         glis=NULL;
     }
     else
     {
-        if(strcmp("GOBYE",(char*)reply)==0)
+        if(strncmp("GOBYE",(char*)reply,5)==0)
         {
             void *bye=malloc(3);
             inc =0;

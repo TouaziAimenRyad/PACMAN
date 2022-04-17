@@ -289,7 +289,10 @@ public class Comm_client implements Runnable {
                 Serveur.nb_partie--;
             }
         }
-
+        Partie partie=player.getgame();
+        synchronized(partie){
+            if(partie.nb_start==partie.getnbjoueur())partie.notifyAll();
+        }
         player.remove_from_game();
         int offset = 0;
         External.arraycopy(Buff, offset, External.UNROK, 0, External.UNROK.length);
@@ -586,7 +589,7 @@ public class Comm_client implements Runnable {
 
     private void send_positions() throws Exception {
 
-        byte[] buff = new byte[21];
+        byte[] buff = new byte[25];
         int offset = 0;
 
         External.arraycopy(buff, offset, External.POSIT, 0, External.POSIT.length);
@@ -651,7 +654,7 @@ public class Comm_client implements Runnable {
     }
 
     private void send_move_score() throws Exception {
-        byte[] Buff = new byte[16];
+        byte[] Buff = new byte[21];
         int offset = 0;
 
         External.arraycopy(Buff, offset, External.MOVEF, 0, External.MOVEF.length);
@@ -675,11 +678,11 @@ public class Comm_client implements Runnable {
     }
 
     private void downmove() throws Exception {
-        byte[] Buff = new byte[12];
+        byte[] Buff = new byte[7];
         int inc = 0, nb;
 
         while (inc < 7) {
-            nb = in.read(Buff, inc, 3 - inc);
+            nb = in.read(Buff, inc, 7 - inc);
             if (nb == -1) {
                 start = null;
                 return;
@@ -691,7 +694,7 @@ public class Comm_client implements Runnable {
             out.flush();
             return;
         }
-        Short d = Short.valueOf(new String(Buff));
+        Short d = Short.valueOf(new String(Buff,1,3));
         int s1 = player.getscore();
         Short nb_moves = player.getgame().downmove(Short.valueOf(player.get_string_i()),Short.valueOf(player.get_string_j()), d, player);
         player.set_i((short)(Short.valueOf(player.get_string_i())+ nb_moves));
@@ -703,11 +706,11 @@ public class Comm_client implements Runnable {
     }
 
     private void leftmove() throws Exception {
-        byte[] Buff = new byte[12];
+        byte[] Buff = new byte[7];
         int inc = 0, nb;
 
         while (inc < 7) {
-            nb = in.read(Buff, inc, 3 - inc);
+            nb = in.read(Buff, inc, 7 - inc);
             if (nb == -1) {
                 start = null;
                 return;
@@ -719,7 +722,7 @@ public class Comm_client implements Runnable {
             out.flush();
             return;
         }
-        Short d = Short.valueOf(new String(Buff));
+        Short d = Short.valueOf(new String(Buff,1,3));
         int s1 = player.getscore();
         Short nb_moves = player.getgame().leftmove(Short.valueOf(player.get_string_i()),Short.valueOf(player.get_string_j()), d, player);
         player.set_j((short)(Short.valueOf(player.get_string_j()) - nb_moves));
@@ -731,11 +734,11 @@ public class Comm_client implements Runnable {
     }
 
     private void rightmove() throws Exception {
-        byte[] Buff = new byte[12];
+        byte[] Buff = new byte[7];
         int inc = 0, nb;
 
         while (inc < 7) {
-            nb = in.read(Buff, inc, 3 - inc);
+            nb = in.read(Buff, inc, 7 - inc);
             if (nb == -1) {
                 start = null;
                 return;
@@ -747,7 +750,7 @@ public class Comm_client implements Runnable {
             out.flush();
             return;
         }
-        Short d = Short.valueOf(new String(Buff));
+        Short d = Short.valueOf(new String(Buff,1,3));
         int s1 = player.getscore();
         Short nb_moves = player.getgame().rightmove(Short.valueOf(player.get_string_i()),Short.valueOf(player.get_string_j()), d, player);
         player.set_j((short)(Short.valueOf(player.get_string_j()) + nb_moves));
@@ -759,11 +762,11 @@ public class Comm_client implements Runnable {
     }
 
     private void upmove() throws Exception {
-        byte[] Buff = new byte[12];
+        byte[] Buff = new byte[7];
         int inc = 0, nb;
 
         while (inc < 7) {
-            nb = in.read(Buff, inc, 3 - inc);
+            nb = in.read(Buff, inc, 7 - inc);
             if (nb == -1) {
                 start = null;
                 return;
@@ -775,7 +778,7 @@ public class Comm_client implements Runnable {
             out.flush();
             return;
         }
-        Short d = Short.valueOf(new String(Buff));
+        Short d = Short.valueOf(new String(Buff,1,3));
         int s1 = player.getscore();
         Short nb_moves = player.getgame().upmove(Short.valueOf(player.get_string_i()),Short.valueOf(player.get_string_j()), d, player);
         player.set_i((short)(Short.valueOf(player.get_string_i()) - nb_moves));
@@ -806,7 +809,7 @@ public class Comm_client implements Runnable {
         }
 
         byte nb_joueurs = player.getgame().getnbjoueur();
-        byte[] Buff_relpy = new byte[11 + nb_joueurs * 30];
+        Buff = new byte[10 + nb_joueurs * 30];
         int offset = 0;
 
         External.arraycopy(Buff, offset, External.GLIS_reply, 0, External.GLIS_reply.length);

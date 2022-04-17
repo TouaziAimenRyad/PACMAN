@@ -10,7 +10,7 @@ public class Serveur {
     static byte nb_partie = 0;
     static Object syn_nb_partie = new Object();
     static HashMap<Byte, Partie> list_parties_nc = new HashMap<>();
-    static HashSet<InetSocketAddress> set_socket_multi;
+    static HashSet<InetSocketAddress> set_socket_multi=new HashSet<>();
 
     public static void main(String[] args) {
 
@@ -53,7 +53,7 @@ public class Serveur {
             max = 255;
             int c2 = (int) Math.floor(Math.random() * (max - min + 1) + min);
             min = 1;
-            max = 255;
+            max = 254;
             int c3 = (int) Math.floor(Math.random() * (max - min + 1) + min);
 
             String ip = String.valueOf(c) + "." + String.valueOf(c1) + "." + String.valueOf(c2) + "."
