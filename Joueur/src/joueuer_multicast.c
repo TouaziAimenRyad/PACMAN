@@ -22,150 +22,54 @@ void abonner_multi(char * ip_multicast,char* port_multicast)
 void recv_muilti_def(int multicast_sock) //!!!!!!!! probleme
 { 
     //receive by paquets not all at once cause your not sur of the size
-    printf("abonner multicast\n");
-    char * res=malloc(5);
-    int inc =0;
-    while (inc<5)
+    printf("recv multicast\n");
+    void *buff=malloc(218);
+    while (1)
     {
-        int r=recv(multicast_sock,res+inc,5-inc,0);
-        if (r==-1)
-        {      
-            perror("prolem while receiving\n");
-            free(res);
-            res=NULL;
-            close(multicast_sock);
-            exit(1);
-        }
-        inc+=r;    
-    }
-    if(strcmp(res,"GHOST")==0)
-    {
-        void * ghost=malloc(11);
-        inc =0;
-        while (inc<11)
+        int r=recv(multicast_sock,buff,218,0);
+        if(strncmp((char *)(buff),"GHOST",5)==0)
         {
-            int r=recv(multicast_sock,ghost+inc,11-inc,0);
-            if (r==-1)
-            {      
-                perror("prolem while receiving\n");
-                free(res);
-                res=NULL;
-                free(ghost);
-                ghost=NULL;
-                close(multicast_sock);
-                exit(1);
-            }
-            inc+=r;    
+            char * x=malloc(3);
+            strncpy(x,(char*)(buff+6),3);
+            char * y=malloc(3);
+            strncpy(y,(char*)(buff+6+4),3);
+            printf("position GHOST x=%s y=%s\n",x,y);
+            free(x);x=NULL;
+            free(y);y=NULL;
+            
         }
-        char *x=malloc(3);
-        char*y=malloc(3);
-        strncpy(x,(char*)(ghost+1),3);
-        strncpy(y,(char*)(ghost+1+4),3);
-        free(x);x=NULL;
-        free(y);y=NULL;
-        free(ghost);ghost=NULL;
-    }
-    if (strcmp(res,"SCORE")==0)
-    {   
-        int size=5+8+4+3+3+3+4;
-        char * score=malloc(size);
-        inc =0;
-        while (inc<size)
+
+        if(strncmp((char *)(buff),"SCORE",5)==0)
         {
-            int r=recv(multicast_sock,score+inc,size-inc,0);
-            if (r==-1)
-            {      
-                perror("prolem while receiving\n");
-                free(res);
-                res=NULL;
-                free(score);
-                res=score;
-                close(multicast_sock);
-                exit(1);
-            }
-            inc+=r;    
+            char *id=malloc(8);
+            strncpy(id,(char*)(buff+6),8);
+            char *point=malloc(4);
+            strncpy(point,(char*)(buff+6+9),4);
+            char * x=malloc(3);
+            strncpy(x,(char*)(buff+6+9+5),3);
+            char * y=malloc(3);
+            strncpy(y,(char*)(buff+6+9+5+4),3);
+            printf("score SCORE id=%s point=%s x=%s y=%s\n",id,point,x,y);
+            free(id);id=NULL;
+            free(point);point=NULL;
+            free(x);x=NULL;
+            free(y);y=NULL;
+            
         }
-
-        char * id =malloc(8);
-        char *point=malloc(4);
-        char *x=malloc(3);
-        char*y=malloc(3);
-        strncpy(id,score+1,8); 
-        strncpy(point,score+1+9,4); 
-        strncpy(y,score+1+9+5,3);
-        strncpy(y,score+1+9+5+4,3); 
-        free(x);x=NULL;
-        free(y);y=NULL;
-        free(point);point=NULL;
-        free(id);id=NULL;
-        free(score);score=NULL;
-        
-
-    }
-    if (strcmp(res,"MESSA"))
-    {   
-        int size=200+8+3+2;
-        void * mesg=malloc(size);
-        inc =0;
-        while (inc<size)
+         if(strncmp((char *)(buff),"MESSA",5)==0)
         {
-            int r=recv(multicast_sock,mesg+inc,size-inc,0);
-            if (r==-1)
-            {      
-                perror("prolem while receiving\n");
-                free(res);
-                res=NULL;
-                free(mesg);
-                mesg=NULL;
-                close(multicast_sock);
-                exit(1);
-            }
-            inc+=r;    
+            char *id=malloc(8);
+            strncpy(id,(char*)(buff+6),8);
+            char * message=malloc(r-18);
+            strncpy(message,(char*)(buff+6+9),r-18);
+            printf("message MESSA id=%s message=%s\n",id,message);
+            free(id);id=NULL;
+            free(message);message=NULL;
+            
+            
         }
-        char * id =malloc(8);
-        char* message=malloc(200);
-        strncpy(id,mesg+1,8); 
-        strncpy(message,mesg+1+9,200); 
-
-        free(message);message=NULL;
-        free(id);id=NULL;
-        free(mesg);mesg=NULL;
-
     }
-    if (strcmp(res,"ENDGA"))
-    {
-        int size=8+4+3+2;
-        void *end=malloc(size);
-        inc =0;
-        while (inc<size)
-        {
-            int r=recv(multicast_sock,end+inc,size-inc,0);
-            if (r==-1)
-            {      
-                perror("prolem while receiving\n");
-                free(res);
-                res=NULL;
-                free(end);
-                end=NULL;
-                close(multicast_sock);
-                exit(1);
-            }
-            inc+=r;    
-        }
-        char * id =malloc(8);
-        char *point=malloc(4);
-        strncpy(id,end+1,8); 
-        strncpy(point,end+1+9,4); 
-
-        //close connection ??????
-        close(multicast_sock);
-        free(point);point=NULL;
-        free(id);id=NULL;
-        free(end);end=NULL;
-
-    }
-    free(res);
-    res=NULL;
+    
     
     
 }

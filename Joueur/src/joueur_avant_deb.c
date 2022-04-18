@@ -373,10 +373,10 @@ void palyers_list(int connection_socket,int partie)
 
         uint8_t nb_player= *((uint8_t *)(buff+3));
         printf("players: \n");
-        
+        char * player=malloc(18);
+        char* player_id=malloc(9);
         for (uint8_t i = 0; i < nb_player; i++){
-            char * player=malloc(18);
-            char* player_id=malloc(9);
+           
             inc=0;
             while (inc<17)
             {
@@ -396,9 +396,10 @@ void palyers_list(int connection_socket,int partie)
             strncpy(player_id,player+6,8); 
             player_id[8]='\0';
             printf("\t player: %s\n",player_id); 
-            free(player_id);player_id=NULL;
-            free(player);player=NULL;                  
+                             
         }
+        free(player_id);player_id=NULL;
+        free(player);player=NULL; 
                       
     }
     else if(strncmp(buff,"DUNNO",5)==0){

@@ -276,6 +276,8 @@ void quit(int connection_socket)
         if (r==-1)
         {   
             perror("prolem while receiving\n");
+            free(reply);
+            reply=NULL;
             close(connection_socket);
             exit(1);
         }
@@ -289,7 +291,7 @@ void quit(int connection_socket)
 
 /////////////////////////////////////////////////
 
-void get_list(int connection_socket)
+void get_list_req(int connection_socket)
 {
     if (send(connection_socket,"GLIS?***",8,0)<8)
     {
@@ -421,13 +423,16 @@ void get_list_res(int connection_socket)
 
 
 void send_muilti_def_mail(int connection_socket,char* message) //send to the server than the server wil do the multicast
-{       
+{   
+    printf("send mail while playing\n");    
     int msg_size=strlen(message);
     void *buff= malloc(msg_size+9);
     sprintf((char*) buff,"%s %s***","MAIL?",message);
     if (send(connection_socket,buff,msg_size+9,0)<msg_size+9)
     {
         perror("prolem while sending\n");
+        free(buff);
+        buff=NULL;
         close(connection_socket);
         exit(1);
     }
@@ -442,16 +447,19 @@ void send_muilti_def_mail(int connection_socket,char* message) //send to the ser
         if (r==-1)
         {      
             perror("prolem while receiving\n");
+            free(server_reply);
+            server_reply=NULL;
             close(connection_socket);
             exit(1);
         }
         inc+=r;    
     }
-    server_reply[inc]='\0';
+   
     
     if(strncmp(server_reply,"GOBYE",5))
     {
         close(connection_socket);
+        printf("goodbye  %s\n",(char *)(server_reply));
     }
     free(server_reply);
     server_reply=NULL;
