@@ -10,6 +10,8 @@ public class Serveur {
     static byte nb_partie = 0;
     static Object syn_nb_partie = new Object();
     static HashMap<Byte, Partie> list_parties_nc = new HashMap<>();
+    static Object syn_partie_c = new Object();
+    static HashMap<Byte, Partie> list_parties_c = new HashMap<>();
     static HashSet<InetSocketAddress> set_socket_multi=new HashSet<>();
 
     public static void main(String[] args) {

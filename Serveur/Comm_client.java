@@ -1,22 +1,19 @@
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
 
 public class Comm_client implements Runnable {
 
-    private Socket client;
-    private OutputStream out;
-    private InputStream in;
-    private Player player = new Player();
+    
+    private Player player;
     private Boolean start = false;
 
-    public Comm_client(Socket client) throws IOException {
-        this.client = client;
-        out = client.getOutputStream();
-        in = client.getInputStream();
+    public Comm_client(Socket client) throws Exception {
+        player=new Player(client);
     }
 
     @Override
@@ -36,6 +33,9 @@ public class Comm_client implements Runnable {
 
         int inc = 0, nb;
         byte[] buff = new byte[5];
+
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
 
         while (start == false) {
 
@@ -73,17 +73,21 @@ public class Comm_client implements Runnable {
                     break;
                 default:
                     out.write(External.DUNNO, 0, External.DUNNO.length);
+                    out.flush();
             }
         }
 
         if (start == null) {
-            in.close();
-            out.close();
-            client.close();
+            player.fermer_cnx();
             return;
         }
 
         game();
+
+        if (start == null) {
+            player.fermer_cnx();
+            return;
+        }
 
     }
 
@@ -91,6 +95,9 @@ public class Comm_client implements Runnable {
 
         byte[] buff = new byte[10];
         int offset = 0;
+
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
 
         // send games and list of ogams
         External.arraycopy(buff, offset, External.GAMES, 0, External.GAMES.length);
@@ -139,6 +146,9 @@ public class Comm_client implements Runnable {
 
         byte[] buff = new byte[17];
         int inc = 0, nb;
+
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
 
         // read the last part of request
         while (inc < buff.length) {
@@ -200,6 +210,9 @@ public class Comm_client implements Runnable {
         int inc = 0, nb;
         byte n_game;
 
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
+
         // read the last part of request
         while (inc < buff.length) {
             nb = in.read(buff, inc, buff.length - inc);
@@ -257,6 +270,9 @@ public class Comm_client implements Runnable {
         byte[] Buff = new byte[10];
         int inc = 0, nb;
 
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
+
         while (inc < 3) {
             nb = in.read(Buff, inc, 3 - inc);
             if (nb == -1) {
@@ -287,12 +303,18 @@ public class Comm_client implements Runnable {
             synchronized (Serveur.syn_nb_partie) {
                 Serveur.list_parties_nc.remove(num);
                 Serveur.nb_partie--;
+                Serveur.set_socket_multi.remove(game.get_multicast());
             }
         }
-        Partie partie=player.getgame();
-        synchronized(partie){
-            if(partie.nb_start==partie.getnbjoueur())partie.notifyAll();
+
+        synchronized(game){
+            if(game.nb_start==game.getnbjoueur()){
+                game.notifyAll();
+                Serveur.list_parties_nc.remove(game.getnumero());
+                Serveur.list_parties_c.put(game.getnumero(), game);
+            }
         }
+        
         player.remove_from_game();
         int offset = 0;
         External.arraycopy(Buff, offset, External.UNROK, 0, External.UNROK.length);
@@ -305,11 +327,13 @@ public class Comm_client implements Runnable {
 
     }
 
-    // verifier le format de reception
     private void list_of_players() throws Exception {
 
         byte[] buff = new byte[5];
         int inc = 0, nb;
+
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
 
         // read the last part of request
         while (inc < buff.length) {
@@ -323,7 +347,7 @@ public class Comm_client implements Runnable {
 
         byte n_game = buff[1];
 
-        if (!new String(buff, 2, 3).equals(new String(External.ETOILES))) {
+        if (!new String(buff, 2, 3).equals(new String(External.ETOILES)) || buff[0]!=(byte)' ' ) {
             out.write(External.DUNNO, 0, External.DUNNO.length);
             out.flush();
             return;
@@ -379,10 +403,12 @@ public class Comm_client implements Runnable {
 
     }
 
-    // verifier le format de recepetion
     private void size_reply() throws Exception {
         byte[] buff = new byte[5];
         int inc = 0, nb;
+
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
 
         // read the last part of request
         while (inc < buff.length) {
@@ -396,7 +422,7 @@ public class Comm_client implements Runnable {
 
         byte n_game = buff[1];
 
-        if (!new String(buff, 2, 3).equals(new String(External.ETOILES))) {
+        if (!new String(buff, 2, 3).equals(new String(External.ETOILES)) || buff[0]!=(byte)' ' ) {
             out.write(External.DUNNO, 0, External.DUNNO.length);
             out.flush();
             return;
@@ -443,10 +469,12 @@ public class Comm_client implements Runnable {
         out.flush();
     }
 
-    /// traiter si le joueur n'est pas inscrit
     private void start_game() throws Exception {
         byte[] buff = new byte[3];
         int inc = 0, nb;
+
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
 
         if (player.getgame() == null) {
             out.write(External.DUNNO, 0, External.DUNNO.length);
@@ -472,16 +500,18 @@ public class Comm_client implements Runnable {
         Partie game = player.getgame();
 
         if (game == null) {
-            // joueur non inscrit
+            out.write(External.DUNNO, 0, External.DUNNO.length);
+            out.flush();
+            return;
         } else {
             start = true;
 
             player.set_ij();
             synchronized (game) {
                 game.incnbstart();
-                if (game.getnbstart() == game.getnbjoueur())
+                if (game.getnbstart() == game.getnbjoueur()){
                     game.notifyAll();
-                else
+                }else
                     game.wait();
             }
         }
@@ -496,17 +526,23 @@ public class Comm_client implements Runnable {
         welcome();
         send_positions();
 
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
+
         Partie game = player.getgame();
 
         // on attend que tu le monde a recue les message de debut
         synchronized (game) {
-            if (game.getnbstart() == 0)
+            if (game.getnbstart() == 0){
+                Serveur.list_parties_nc.remove(game.getnumero());
+                Serveur.list_parties_c.put(game.getnumero(), game);
+                game.lunch_fontomes_threads();
                 game.notifyAll();
-            else
+            }else
                 game.wait();
         }
 
-        while (start == true) {
+        while (start == true ) {
             inc = 0;
             // read the first part of request
             while (inc < 5) {
@@ -537,7 +573,15 @@ public class Comm_client implements Runnable {
                 case External.IQUIT:
                     quit();
                     break;
+                case External.SEND_REQ:
+                    Send();
+                    break;
+                case External.MAIL_REQ:
+                    mail();
+                    break;
                 default:
+                    out.write(External.DUNNO, 0, External.DUNNO.length);
+                    out.flush();
                     break;
             }
         }
@@ -549,6 +593,8 @@ public class Comm_client implements Runnable {
 
         byte[] buff = new byte[39];
         int offset = 0;
+
+        OutputStream out=player.get_out();
 
         External.arraycopy(buff, offset, External.WELCOM, 0, External.WELCOM.length);
         offset += External.WELCOM.length;
@@ -592,6 +638,8 @@ public class Comm_client implements Runnable {
         byte[] buff = new byte[25];
         int offset = 0;
 
+        OutputStream out=player.get_out();
+
         External.arraycopy(buff, offset, External.POSIT, 0, External.POSIT.length);
         offset += External.POSIT.length;
         byte[] id_buff = player.getid().getBytes();
@@ -615,6 +663,9 @@ public class Comm_client implements Runnable {
         byte[] Buff = new byte[3];
         int inc = 0, nb;
 
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
+
         while (inc < 3) {
             nb = in.read(Buff, inc, 3 - inc);
             if (nb == -1) {
@@ -630,6 +681,19 @@ public class Comm_client implements Runnable {
             return;
         }
 
+        Partie game = player.getgame();
+
+        byte num = game.getnumero();
+
+        if (game.remove_player(player)) {
+            synchronized (Serveur.syn_partie_c) {
+                Serveur.list_parties_c.remove(num);
+                Serveur.set_socket_multi.remove(game.get_multicast());
+            }
+        }
+        
+        player.remove_from_game();
+
         out.write(External.GODEBYE, 0, External.GODEBYE.length);
         out.flush();
         start = false;
@@ -638,6 +702,8 @@ public class Comm_client implements Runnable {
     private void send_move() throws Exception {
         byte[] Buff = new byte[16];
         int offset = 0;
+
+        OutputStream out=player.get_out();
 
         External.arraycopy(Buff, offset, External.MOVE, 0, External.MOVE.length);
         offset += External.MOVE.length;
@@ -649,13 +715,26 @@ public class Comm_client implements Runnable {
         External.arraycopy(Buff, offset + 1, y.getBytes(), 0, 3);
         offset += 4;
         External.arraycopy(Buff, offset, External.ETOILES, 0, External.ETOILES.length);
+        
+        byte nb_font=player.getgame().get_nb_fontomes();
+
+        if(nb_font==0 && !player.get_game_finisher()){
+            out.write(External.GODEBYE, 0, External.GODEBYE.length);
+            out.flush();
+            start=false;
+            return;
+        }
+        
         out.write(Buff, 0, Buff.length);
         out.flush();
+        
     }
 
     private void send_move_score() throws Exception {
         byte[] Buff = new byte[21];
         int offset = 0;
+
+        OutputStream out=player.get_out();
 
         External.arraycopy(Buff, offset, External.MOVEF, 0, External.MOVEF.length);
         offset += External.MOVEF.length;
@@ -667,19 +746,31 @@ public class Comm_client implements Runnable {
         External.arraycopy(Buff, offset + 1, y.getBytes(), 0, 3);
         offset += 4;
         Buff[offset] = ' ';
-        String st = player.getscore().toString();
-        while (st.length() < 4)
-            st = "0" + st;
+        String st = player.getscore_string();
         External.arraycopy(Buff, offset + 1, st.getBytes(), 0, 4);
         offset += 5;
         External.arraycopy(Buff, offset, External.ETOILES, 0, External.ETOILES.length);
+
+        byte nb_font=player.getgame().get_nb_fontomes();
+
+        if(nb_font==0 && !player.get_game_finisher()){
+            out.write(External.GODEBYE, 0, External.GODEBYE.length);
+            out.flush();
+            start=false;
+            return;
+        }
+
         out.write(Buff, 0, Buff.length);
         out.flush();
     }
 
     private void downmove() throws Exception {
+
         byte[] Buff = new byte[7];
         int inc = 0, nb;
+
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
 
         while (inc < 7) {
             nb = in.read(Buff, inc, 7 - inc);
@@ -689,15 +780,26 @@ public class Comm_client implements Runnable {
             }
             inc += nb;
         }
-        if (!new String(Buff, 4, 3).equals(new String(External.ETOILES))) {
+
+        if (!new String(Buff, 4, 3).equals(new String(External.ETOILES)) || Buff[0]!=(byte)' ') {
             out.write(External.DUNNO, 0, External.DUNNO.length);
             out.flush();
             return;
         }
-        Short d = Short.valueOf(new String(Buff,1,3));
+
+        Short d;
+        try {
+            d = Short.valueOf(new String(Buff,1,3));
+        } catch (Exception e) {
+            out.write(External.DUNNO, 0, External.DUNNO.length);
+            out.flush();
+            return;
+        }
+
         int s1 = player.getscore();
-        Short nb_moves = player.getgame().downmove(Short.valueOf(player.get_string_i()),Short.valueOf(player.get_string_j()), d, player);
-        player.set_i((short)(Short.valueOf(player.get_string_i())+ nb_moves));
+        synchronized(player){
+            player.getgame().downmove(d, player);
+        }
         if (s1 != player.getscore()) {
             send_move_score();
         } else {
@@ -709,6 +811,9 @@ public class Comm_client implements Runnable {
         byte[] Buff = new byte[7];
         int inc = 0, nb;
 
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
+
         while (inc < 7) {
             nb = in.read(Buff, inc, 7 - inc);
             if (nb == -1) {
@@ -717,26 +822,41 @@ public class Comm_client implements Runnable {
             }
             inc += nb;
         }
-        if (!new String(Buff, 4, 3).equals(new String(External.ETOILES))) {
+        
+        if (!new String(Buff, 4, 3).equals(new String(External.ETOILES)) || Buff[0]!=(byte)' ') {
             out.write(External.DUNNO, 0, External.DUNNO.length);
             out.flush();
             return;
         }
-        Short d = Short.valueOf(new String(Buff,1,3));
+
+        Short d;
+        try {
+            d = Short.valueOf(new String(Buff,1,3));
+        } catch (Exception e) {
+            out.write(External.DUNNO, 0, External.DUNNO.length);
+            out.flush();
+            return;
+        }
+
         int s1 = player.getscore();
-        Short nb_moves = player.getgame().leftmove(Short.valueOf(player.get_string_i()),Short.valueOf(player.get_string_j()), d, player);
-        player.set_j((short)(Short.valueOf(player.get_string_j()) - nb_moves));
+        synchronized(player){
+            player.getgame().leftmove(d, player);
+        }
         if (s1 != player.getscore()) {
             send_move_score();
         } else {
             send_move();
         }
+
     }
 
     private void rightmove() throws Exception {
         byte[] Buff = new byte[7];
         int inc = 0, nb;
 
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
+
         while (inc < 7) {
             nb = in.read(Buff, inc, 7 - inc);
             if (nb == -1) {
@@ -745,15 +865,26 @@ public class Comm_client implements Runnable {
             }
             inc += nb;
         }
-        if (!new String(Buff, 4, 3).equals(new String(External.ETOILES))) {
+        
+        if (!new String(Buff, 4, 3).equals(new String(External.ETOILES)) || Buff[0]!=(byte)' ') {
             out.write(External.DUNNO, 0, External.DUNNO.length);
             out.flush();
             return;
         }
-        Short d = Short.valueOf(new String(Buff,1,3));
+
+        Short d;
+        try {
+            d = Short.valueOf(new String(Buff,1,3));
+        } catch (Exception e) {
+            out.write(External.DUNNO, 0, External.DUNNO.length);
+            out.flush();
+            return;
+        }
+
         int s1 = player.getscore();
-        Short nb_moves = player.getgame().rightmove(Short.valueOf(player.get_string_i()),Short.valueOf(player.get_string_j()), d, player);
-        player.set_j((short)(Short.valueOf(player.get_string_j()) + nb_moves));
+        synchronized(player){
+            player.getgame().rightmove(d, player);
+        }
         if (s1 != player.getscore()) {
             send_move_score();
         } else {
@@ -765,6 +896,9 @@ public class Comm_client implements Runnable {
         byte[] Buff = new byte[7];
         int inc = 0, nb;
 
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
+
         while (inc < 7) {
             nb = in.read(Buff, inc, 7 - inc);
             if (nb == -1) {
@@ -773,25 +907,41 @@ public class Comm_client implements Runnable {
             }
             inc += nb;
         }
-        if (!new String(Buff, 4, 3).equals(new String(External.ETOILES))) {
+        
+        if (!new String(Buff, 4, 3).equals(new String(External.ETOILES)) || Buff[0]!=(byte)' ') {
             out.write(External.DUNNO, 0, External.DUNNO.length);
             out.flush();
             return;
         }
-        Short d = Short.valueOf(new String(Buff,1,3));
+
+        Short d;
+        try {
+            d = Short.valueOf(new String(Buff,1,3));
+        } catch (Exception e) {
+            out.write(External.DUNNO, 0, External.DUNNO.length);
+            out.flush();
+            return;
+        }
+
         int s1 = player.getscore();
-        Short nb_moves = player.getgame().upmove(Short.valueOf(player.get_string_i()),Short.valueOf(player.get_string_j()), d, player);
-        player.set_i((short)(Short.valueOf(player.get_string_i()) - nb_moves));
+        synchronized(player){
+            player.getgame().upmove(d, player);
+        }
+
         if (s1 != player.getscore()) {
             send_move_score();
         } else {
             send_move();
         }
+
     }
 
     private void Gamelist() throws Exception {
         byte[] Buff = new byte[3];
         int inc = 0, nb;
+
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
 
         while (inc < 3) {
             nb = in.read(Buff, inc, 3 - inc);
@@ -808,40 +958,167 @@ public class Comm_client implements Runnable {
             return;
         }
 
-        byte nb_joueurs = player.getgame().getnbjoueur();
-        Buff = new byte[10 + nb_joueurs * 30];
-        int offset = 0;
+        Partie partie=player.getgame();
 
-        External.arraycopy(Buff, offset, External.GLIS_reply, 0, External.GLIS_reply.length);
-        offset += External.GLIS_reply.length;
-        Buff[offset] = nb_joueurs;
-        offset++;
-        External.arraycopy(Buff, offset, External.ETOILES, 0, External.ETOILES.length);
-        offset += External.ETOILES.length;
-        for (Player p : player.getgame().joueurs.values()) {
-            External.arraycopy(Buff, offset, External.GPLYR, 0, External.GPLYR.length);
-            offset += External.GPLYR.length;
-            Buff[offset] = ' ';
-            External.arraycopy(Buff, offset, p.getid().getBytes(), 0, 8);
-            offset += 9;
-            Buff[offset] = ' ';
-            String x = p.get_string_i();
-            String y = p.get_string_j();
-            External.arraycopy(Buff, offset, x.getBytes(), 0, 3);
-            offset += 3;
-            Buff[offset] = ' ';
-            External.arraycopy(Buff, offset + 1, y.getBytes(), 0, 3);
-            offset += 4;
-            Buff[offset] = ' ';
-            String st = p.getscore().toString();
-            while (st.length() < 4)
-                st = "0" + st;
-            External.arraycopy(Buff, offset + 1, st.getBytes(), 0, 4);
-            offset += 5;
+        synchronized(partie){
+            byte nb_joueurs = partie.getnbjoueur();
+            Buff = new byte[10 + nb_joueurs * 30];
+            int offset = 0;
+            
+            External.arraycopy(Buff, offset, External.GLIS_reply, 0, External.GLIS_reply.length);
+            offset += External.GLIS_reply.length;
+            Buff[offset] = nb_joueurs;
+            offset++;
             External.arraycopy(Buff, offset, External.ETOILES, 0, External.ETOILES.length);
+            offset += External.ETOILES.length;
+
+            for(Player p : partie.joueurs.values()){
+                External.arraycopy(Buff, offset, External.GPLYR, 0, External.GPLYR.length);
+                offset += External.GPLYR.length;
+                External.arraycopy(Buff, offset, p.getid().getBytes(), 0, 8);
+                offset += 8;
+                Buff[offset] = ' ';
+                offset++;
+
+                synchronized(p){
+                    String x = p.get_string_i();
+                    String y = p.get_string_j();
+                    External.arraycopy(Buff, offset, x.getBytes(), 0, 3);
+                    offset += 3;
+                    Buff[offset] = ' ';
+                    offset++;
+                    External.arraycopy(Buff, offset, y.getBytes(), 0, 3);
+                    offset += 3;
+                    Buff[offset] = ' ';
+                    String st = p.getscore_string();
+                    offset++;
+                    External.arraycopy(Buff, offset, st.getBytes(), 0, 4);
+                    offset += 4;
+                    External.arraycopy(Buff, offset, External.ETOILES, 0, External.ETOILES.length);
+                }
+
+            }
+
         }
+
         out.write(Buff, 0, Buff.length);
         out.flush();
+    }
+
+    private void Send() throws Exception {
+        byte buff[] =new byte[213];
+
+        int inc=0;
+        int r;
+        
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
+
+        String s="";
+
+        while(inc<10){
+            r=in.read(buff,inc,10-inc);
+            if (r==-1) {
+                start=null;
+                return;
+            }
+            inc+=r;
+        }
+
+        while(inc<213){
+            r=in.read(buff,inc,3);
+            if(r==-1){
+                start=null;
+                return;
+            }
+            s+=new String(buff,inc,r);
+            inc+=r;
+            if(inc>12)
+                if(s.substring(s.length()-3).equals("***")) break;
+        }
+
+        if(!new String(buff,inc-3,3).equals(new String(External.ETOILES)) || buff[0]!=(byte)' ' || buff[9]!=(byte)' ' ){
+            out.write(External.NSEND_REP,0,External.NSEND_REP.length);
+            out.flush();
+            return;
+        }
+
+        Partie game= player.getgame();
+
+        synchronized(game){
+            Player player_2 = game.joueurs.get(new String(buff,1,8));
+            
+            if (player_2==null){
+                out.write(External.NSEND_REP,0,External.NSEND_REP.length);
+                out.flush();
+                return;
+            }
+
+
+            byte buff2[] =new byte[5+inc];
+            int offset=0;
+            External.arraycopy(buff2, offset, External.UDP_SEND, 0, External.UDP_SEND.length);
+            offset+=External.UDP_SEND.length;
+            External.arraycopy(buff, offset, player.getid().getBytes(),0, player.getid().getBytes().length);
+            offset+=player.getid().getBytes().length;
+            buff2[offset]=(byte)' ';
+            offset++;
+            External.arraycopy(buff2, offset,buff, 10, inc-13);
+            offset+=inc-13;
+            External.arraycopy(buff2, offset,External.PLUSS, 0, External.PLUSS.length);
+            DatagramPacket dp=new DatagramPacket(buff2, buff2.length,new InetSocketAddress(player_2.getAddress(), player_2.getPort()));
+            
+            DatagramSocket dso=new DatagramSocket();
+            dso.send(dp);
+
+            out.write(External.SEND_REP,0,External.SEND_REP.length);
+            out.flush();
+
+        }
+
+
+    }
+
+    private void mail() throws Exception{
+        byte buff[] =new byte[204];
+
+        int inc=0;
+        int r;
+        
+        InputStream in=player.get_in();
+        OutputStream out=player.get_out();
+
+        r=in.read(buff,inc,1);
+        if(r==-1){
+            start=null;
+            return;
+        }
+        inc++;
+
+        String s="";
+        while(inc<204){
+            r=in.read(buff,inc,3);
+            if(r==-1){
+                start=null;
+                return;
+            }
+            s+=new String(buff,inc,r);
+            inc+=r;
+            if(inc>3)
+                if(s.substring(s.length()-3).equals("***")) break;
+        }
+
+        if(!new String(buff,inc-3,3).equals(new String(External.ETOILES)) || buff[0]!=(byte)' '){
+            out.write(External.NSEND_REP,0,External.NSEND_REP.length);
+            out.flush();
+            return;
+        }
+
+        out.write(External.MAIL_REP,0, External.MAIL_REP.length);
+        out.flush();
+
+        player.getgame().envoie_multi(buff,inc-4 ,player.getid());
+
     }
 
 }

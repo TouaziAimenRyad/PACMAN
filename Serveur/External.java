@@ -19,8 +19,17 @@ public abstract class External {
     static byte[] GLIS_reply = "GLIS! ".getBytes();
     static byte[] GPLYR = "GPLYR ".getBytes();
     static byte[] GODEBYE = "GOBYE***".getBytes();
+    static byte[] SEND_REP ="SEND!***".getBytes();
+    static byte[] NSEND_REP ="NSEND***".getBytes();
+    static byte[] UDP_SEND= "MESSP ".getBytes();
+    static byte[] PLUSS= "+++".getBytes();
+    static byte[] MAIL_REP= "MALL!".getBytes();
+    static byte[] UDP_MAIL= "MESSA ".getBytes();
+    static byte[] CAPTURE_FAN="SCORE ".getBytes();
 
+    static final String MAIL_REQ= "MALL?";
     static final String START = "START";
+    static final String SEND_REQ="SEND?";
     static final String UPMOV = "UPMOV";
     static final String DOMOV = "DOMOV";
     static final String LEMOV = "LEMOV";
