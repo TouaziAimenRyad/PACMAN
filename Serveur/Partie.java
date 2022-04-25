@@ -230,6 +230,40 @@ public class Partie {
         liste_thread_fontomes=null;
     }
 
+    void send_pos_fon(Short i,Short j) throws Exception{
+        DatagramSocket dso =new DatagramSocket();
+
+        byte buff[]=new byte[16];
+
+        External.arraycopy(buff, 0, External.GHOST, 0, External.GHOST.length);
+        int offset=External.GHOST.length;
+
+        String x=String.valueOf(i);
+        while(x.length()<3){
+            x="0"+x;
+        }
+        External.arraycopy(buff, offset, x.getBytes(), 0, x.getBytes().length);
+        offset+=x.getBytes().length;
+        buff[offset]=(byte) ' ';
+        offset++;
+
+        String y=String.valueOf(j);
+        while(y.length()<3){
+            y="0"+y;
+        }
+        External.arraycopy(buff, offset, y.getBytes(), 0, y.getBytes().length);
+        offset+=y.getBytes().length;
+        External.arraycopy(buff, offset, External.PLUSS, 0, External.PLUSS.length);
+
+        DatagramPacket dp=new DatagramPacket(buff, buff.length,multicast);
+
+        synchronized(multicast){
+            dso.send(dp);
+        }
+
+
+    }
+
     private class Thread_fantome extends Thread{
         Labyrinthe.Fantome f;
         short i,j;
@@ -241,18 +275,19 @@ public class Partie {
         }
 
         @Override
-        public void run() {
+        public void run(){
             Random r=new Random();
             while(labyrinthe.get_nb_fontomes()!=0 && !f.capturer){
                 try {
                     sleep(r.nextInt(20)+10);
                     move();
-                } catch (InterruptedException e) {
+                } catch (Exception e) {
                    return;
                 }
             }
         }
-        private void move(){
+        
+        private void move() throws Exception{
             Random r = new Random();
             boolean b;
 
@@ -270,6 +305,7 @@ public class Partie {
                             if(!b){
                                 j++;
                                 change_fontome(i, (short)(j-1), i, j);
+                                send_pos_fon(i, j);
                             }
                         }
                         else b=true;
@@ -284,6 +320,7 @@ public class Partie {
                             if(!b){
                                 j--;
                                 change_fontome(i, (short)(j+1), i, j);
+                                send_pos_fon(i, j);
                             }
                         }
                         else b=true;
@@ -298,6 +335,7 @@ public class Partie {
                             if(!b){
                                 i--;
                                 change_fontome((short)(i+1), j, i, j);
+                                send_pos_fon(i, j);
                             }
                         }
                         else b=true;
@@ -312,6 +350,7 @@ public class Partie {
                             if(!b){
                                 i++;
                                 change_fontome((short)(i-1), j, i, j);
+                                send_pos_fon(i, j);
                             }
                         }
                         else b=true;

@@ -536,8 +536,8 @@ public class Comm_client implements Runnable {
             if (game.getnbstart() == 0){
                 Serveur.list_parties_nc.remove(game.getnumero());
                 Serveur.list_parties_c.put(game.getnumero(), game);
-                game.lunch_fontomes_threads();
                 game.notifyAll();
+                game.lunch_fontomes_threads();
             }else
                 game.wait();
         }

@@ -26,6 +26,8 @@ public abstract class External {
     static byte[] MAIL_REP= "MALL!".getBytes();
     static byte[] UDP_MAIL= "MESSA ".getBytes();
     static byte[] CAPTURE_FAN="SCORE ".getBytes();
+    static byte[] GHOST="GHOST ".getBytes();
+
 
     static final String MAIL_REQ= "MALL?";
     static final String START = "START";
