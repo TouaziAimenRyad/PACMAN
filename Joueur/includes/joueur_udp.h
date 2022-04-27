@@ -12,16 +12,9 @@
 #include <assert.h>
 #include <netdb.h> 
 
-#include "aux.h"
-#include "joueur_multicast.h"
-#include "joueur_udp.h"
+#ifndef JOUEUR_UDP_H_
+#define JOUEUR_UDP_H_
 
-#ifndef JOUEUR_DEB_H_
-#define JOUEUR_DEB_H_
+void * recv_udp_message(void * arg);
 
-void start(int connection_socket);
-void start_reply(int connection_socket ,char* udp_port);
-
-
-
-#endif /* E95B3004_4127_44CA_A5B9_44B192580BE7 */
+#endif 

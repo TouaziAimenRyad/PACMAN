@@ -114,7 +114,8 @@ int main(int argc, char const *argv[]){
                         case 5:
                             r=1;
                             start(connection_socket);
-                            start_reply(connection_socket);
+                            start_reply(connection_socket,udp_port);
+                            
                         break;
                         
                         }
@@ -156,7 +157,7 @@ int main(int argc, char const *argv[]){
                         case 5:
                             r=1;
                             start(connection_socket);
-                            start_reply(connection_socket);
+                            start_reply(connection_socket,udp_port);
                         break;
                         
                         }

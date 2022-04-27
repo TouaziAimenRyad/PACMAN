@@ -5,8 +5,8 @@
   
   all : joueur Serveur.class
 
-  joueur : aux.o joueur.o joueuer_multicast.o joueur_avant_deb.o joueur_debut.o joueur_pendant.o
-	$(CC) -o joueur joueur.o joueuer_multicast.o joueur_avant_deb.o aux.o joueur_debut.o joueur_pendant.o
+  joueur : aux.o joueur.o joueuer_multicast.o joueur_udp.o joueur_avant_deb.o joueur_debut.o joueur_pendant.o
+	$(CC) -o joueur joueur.o joueuer_multicast.o joueur_udp.o joueur_avant_deb.o aux.o joueur_debut.o joueur_pendant.o
   
   joueur.o : Joueur/joueur.c
 	$(CC) $(CFLAGS) -o joueur.o -c Joueur/joueur.c
@@ -22,6 +22,9 @@
 
   joueuer_multicast.o : Joueur/src/joueuer_multicast.c
 	$(CC) $(CFLAGS) -o joueuer_multicast.o -c Joueur/src/joueuer_multicast.c
+
+  joueur_udp.o : Joueur/src/joueur_udp.c
+	$(CC) $(CFLAGS) -o joueur_udp.o -c Joueur/src/joueur_udp.c
 
   aux.o : Joueur/src/aux.c
 	$(CC) $(CFLAGS) -o aux.o -c Joueur/src/aux.c

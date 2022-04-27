@@ -469,3 +469,64 @@ void send_muilti_def_mail(int connection_socket,char* message) //send to the ser
 }
 
 //udp
+
+void send_private_msg(int connection_socket,char* id,char *message)
+{
+    printf("send private msg while playing\n");    
+    int msg_size=strlen(message);
+    void *buff= malloc(msg_size+18);
+    sprintf((char*) buff,"%s %s %s***","SEND?",id,message);
+
+    if (send(connection_socket,buff,msg_size+18,0)<msg_size+18)
+    {
+        perror("prolem while sending\n");
+        free(buff);
+        buff=NULL;
+        close(connection_socket);
+        exit(1);
+    }
+    free(buff);
+    buff=NULL;
+
+   
+    char *server_reply=malloc(8);
+    int inc =0;
+    while (inc<8) 
+    {
+        int r=recv(connection_socket,server_reply+inc,8-inc,0);
+        if (r==-1)
+        {      
+            perror("prolem while receiving\n");
+            free(server_reply);
+            server_reply=NULL;
+            close(connection_socket);
+            exit(1);
+        }
+        inc+=r;    
+    }
+   
+    
+    if(strncmp(server_reply,"SEND!",5))
+    {
+        close(connection_socket);
+        printf("message sent  %s\n",(char *)(server_reply));
+    }
+    
+    if(strncmp(server_reply,"NSEND",5))
+    {
+        close(connection_socket);
+        printf("can't send msg  %s\n",(char *)(server_reply));
+    }
+
+    if(strncmp(server_reply,"GOBYE",5))
+    {
+        close(connection_socket);
+        printf("goodbye  %s\n",(char *)(server_reply));
+    }
+    
+    
+    free(server_reply);
+    server_reply=NULL;
+
+
+}

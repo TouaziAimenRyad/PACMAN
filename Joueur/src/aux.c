@@ -1,4 +1,4 @@
-#include "../includes/aux.h"
+#include "aux.h"
 void PrependZeros(char *dest, const char *src, unsigned minimal_width) {
   size_t len = strlen(src);
   size_t zeros = (len > minimal_width) ? 0 : minimal_width - len;

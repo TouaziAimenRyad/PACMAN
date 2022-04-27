@@ -1,6 +1,5 @@
 
 #include "joueur_debut.h"
-
 void start(int connection_socket)
 {
     printf("start \n");
@@ -14,7 +13,7 @@ void start(int connection_socket)
 
 }
 //nhi ta3k hat hadia
-void start_reply(int connection_socket)
+void start_reply(int connection_socket,char* udp_port)
 {
     printf("start reply \n");
     int size=5+1+2+2+1+15+4+3+6;
@@ -39,11 +38,11 @@ void start_reply(int connection_socket)
     uint8_t n_fantom=*((uint8_t *)(reply+6+2+3+3));
     char *ip=malloc(15);
     strncpy(ip,(char *)(reply+6+2+3+3+2),15);
-    char *port=malloc(4);//to be returnd
+    char *port=malloc(4);
     strncpy(port,(char *)(reply+6+2+3+3+2+16),4);
     
-    char *real_ip=remove_hashtags(ip);// to be returned 
-
+    char *real_ip=remove_hashtags(ip);
+    abonner_multi(real_ip,port);//here starts the mutlticast 
     printf("WELCOME %u ,hauteur %u,largeur %u, nb fontomes %u ,ip %s ,port %s\n",n_partie,h,w,n_fantom,real_ip,port);
     free(ip);
     ip=NULL;
@@ -78,5 +77,10 @@ void start_reply(int connection_socket)
     printf("POSITION id=%s ,x= %d,y= %d\n",id,atoi(x),atoi(y));
     free(reply_pos);
     reply_pos=NULL;
+
+    //start listening to the private msg
+    pthread_t th;
+    pthread_create(&th,NULL,recv_udp_message,udp_port);
+    pthread_join(th,NULL);
     
 }
