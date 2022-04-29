@@ -71,131 +71,57 @@ int main(int argc, char const *argv[]){
         int choice;
         int choice2;
         int partie;
-        int t=0;
-        int r=0;
-       //connection_reply(connection_socket);
+        int c=0;
 
-        while(t==0)
-        {
-            printf("input 1 for new new game\ninput 2 to join an existing game\ninput 3 to unregistre from a game\ninput 4 for lab size\ninput 5 for player list\ninput 6 for game list\n");
+        connection_reply(connection_socket);
+        
+        printf("input 1 for new new game\ninput 2 to join an existing game\ninput 3 to unregistre from a game\ninput 4 for lab size\ninput 5 for player list\ninput 6 for game list\ninput 7 for start game\n");
+
+        while(c==0){
+            printf("\ninput your choice\n");
             scanf("%d",&choice);//tried with read 0 caused some weird problems 
-            switch (choice)
-            {
-                case 1:
-                    t=1;
+            switch (choice){
+                case 1 :
                     reg_new_partie(connection_socket,id,udp_port);
                     regstr_reply(connection_socket);
-                    while (r==0)
-                    {
-                        printf("input 1 to unregistre from a game\ninput 2 for lab size\ninput 3 for player list\ninput 4 for game list\ninput 5 to start\n");
-                        scanf("%d",&choice2);
-                        switch (choice2)
-                        {
-                        case 1:
-                            unreg(connection_socket);
-                        break;
-
-                        case 2:
-                            printf("what game\n");
-                            scanf("%d",&partie);
-                            lab_size(connection_socket,partie);
-                        break;
-
-                        case 3:
-                            printf("what game\n");
-                            scanf("%d",&partie);
-                            palyers_list(connection_socket,partie);
-                        break;
-
-                        case 4:
-                            partie_noncom_list(connection_socket);
-                        break;
-
-                        case 5:
-                            r=1;
-                            start(connection_socket);
-                            start_reply(connection_socket,udp_port);
-                            
-                        break;
-                        
-                        }
-                    }
-                break;
-
-                case 2:
-                    t=1;
+                    break;
+                case 2 :
                     printf("what game you wanna join\n");
                     scanf("%d",&partie);
                     reg_partie_existant(connection_socket,id,udp_port,partie);
                     regstr_reply(connection_socket);
-                    while (r==0)
-                    {
-                        printf("input 1 to unregistre from a game\ninput 2 for lab size\ninput 3 for player list\ninput 4 for game list\ninput 5 to start\n");
-                        scanf("%d",&choice2);
-                        switch (choice2)
-                        {
-                        case 1:
-                            unreg(connection_socket);
-                        break;
-
-                        case 2:
-                            printf("what game\n");
-                            scanf("%d",&partie);
-                            lab_size(connection_socket,partie);
-                        break;
-
-                        case 3:
-                            printf("what game\n");
-                            scanf("%d",&partie);
-                            palyers_list(connection_socket,partie);
-                        break;
-
-                        case 4:
-                            partie_noncom_list(connection_socket);
-                        break;
-
-                        case 5:
-                            r=1;
-                            start(connection_socket);
-                            start_reply(connection_socket,udp_port);
-                        break;
-                        
-                        }
-                    }
-                break;
-
-                case 3:
+                    break;
+                case 3 :
                     unreg(connection_socket);
-
-                break;
-
-                case 4:
-                    printf("what game\n");
+                    break;
+                case 4 :
+                    printf("which game\n");
                     scanf("%d",&partie);
                     lab_size(connection_socket,partie);
-                break;
-
-                case 5:
-                    printf("what game\n");
+                    break;
+                case 5 :
+                    printf("which game\n");
                     scanf("%d",&partie);
                     palyers_list(connection_socket,partie);
-                break;
-
-                case 6:
+                    break;
+                case 6 :
                     partie_noncom_list(connection_socket);
-                break;
-        
+                    break;
+                case 7 :
+                    start(connection_socket);
+                    c=start_reply(connection_socket,udp_port);
+                    break;
+                default :
+                    printf("input 1 for new new game\ninput 2 to join an existing game\ninput 3 to unregistre from a game\ninput 4 for lab size\ninput 5 for player list\ninput 6 for game list\ninput 7 for start game\n");
             }
         }
-
-        printf("out\n");
 
         int choice3;
         int distance;
         int d=0;
         while (d==0)
         {
-            printf("input 1 to move up\ninput 2 to move down\ninput 3 to move left\ninput 4 to move right\ninput 5 to get player list\n input 6 to send mail to all \ninput 7 to send private msg\n input 8 to quit\n");
+            printf("input 1 to move up\ninput 2 to move down\ninput 3 to move left\ninput 4 to move right\ninput 5 to get player list\ninput 6 to send mail to all \ninput 7 to send private msg\ninput 8 to quit\n");
             scanf("%d",&choice3);
             switch (choice3)
             {

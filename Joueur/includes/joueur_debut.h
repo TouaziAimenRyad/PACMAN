@@ -20,7 +20,7 @@
 #define JOUEUR_DEB_H_
 
 void start(int connection_socket);
-void start_reply(int connection_socket ,char* udp_port);
+int start_reply(int connection_socket ,char* udp_port);
 
 
 

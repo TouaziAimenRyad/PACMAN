@@ -12,7 +12,7 @@ void move_up(int connection_socket,int dist)
     sprintf(req,"%s %s***","UPMOV",d);
     if (send(connection_socket,req,12,0)<12)
     {
-        perror("prolem while sending\n");
+        perror("problem while sending\n");
         free(d);
         d=NULL;
         free(buff);
@@ -156,8 +156,8 @@ void reply_move(int connection_socket)
         }
         inc+=r; 
     }
-    if(strncmp("MOVE!",(char*)reply_msg,5)==0)
-    {
+
+    if(strncmp("MOVE!",(char*)reply_msg,5)==0){
         void *reply_mv=malloc(11);
         inc =0;
         while (inc<11)
@@ -186,71 +186,54 @@ void reply_move(int connection_socket)
         reply_mv=NULL;
 
     }
-    else
-    {
-        if(strncmp("MOVEF",(char*)reply_msg,5)==0)
-        {
-            void *reply_mvf=malloc(16);
-            inc =0;
-            while (inc<16)
-            {
-                int r=recv(connection_socket,reply_mvf+inc,16-inc,0);
-                if (r==-1)
-                {   
-                    perror("prolem while receiving\n");
-                    free(reply_mvf);
-                    reply_mvf=NULL;
-                    free(reply_msg);
-                    reply_msg=NULL;
-                    close(connection_socket);
-                    exit(1);
-                }
-                inc+=r;    
+    else if(strncmp("MOVEF",(char*)reply_msg,5)==0){
+        void *reply_mvf=malloc(16);
+        inc =0;
+        while (inc<16){
+            int r=recv(connection_socket,reply_mvf+inc,16-inc,0);
+            if (r==-1){   
+                perror("prolem while receiving\n");
+                free(reply_mvf);
+                reply_mvf=NULL;
+                free(reply_msg);
+                reply_msg=NULL;
+                close(connection_socket);
+                exit(1);
             }
-            char* new_x=malloc(3);
-            char* new_y=malloc(3);
-            char* point=malloc(4);
-            strncpy(new_x,(char*)(reply_mvf+1),3);
-            strncpy(new_y,(char*)(reply_mvf+1+4),3);
-            strncpy(point,(char*)(reply_mvf+1+4+4),4);
-
-            printf("x= %d, y=%d, p=%d\n",atoi(new_x),atoi(new_y),atoi(point));
-            free(new_x);new_x=NULL;
-            free(new_y);new_y=NULL;
-            free(point);point=NULL;
-            free(reply_mvf);
-            reply_mvf=NULL;
-
-
-
+            inc+=r;    
         }
-        else
-        {
-            if(strncmp("GOBYE",(char*)reply_msg,5)==0)
-            {
-                void *bye=malloc(3);
-                inc =0;
-                while (inc<3)
-                {
-                    int r=recv(connection_socket,bye+inc,3-inc,0);
-                    if (r==-1)
-                        {   
-                            perror("prolem while receiving\n");
-                            free(bye);
-                            bye=NULL;
-                            free(reply_msg);
-                            reply_msg=NULL;
-                            close(connection_socket);
-                            exit(1);
-                        }
-                    inc+=r;    
-                }
+        char* new_x=malloc(3);
+        char* new_y=malloc(3);
+        char* point=malloc(4);
+        strncpy(new_x,(char*)(reply_mvf+1),3);
+        strncpy(new_y,(char*)(reply_mvf+1+4),3);
+        strncpy(point,(char*)(reply_mvf+1+4+4),4);
+
+        printf("x= %d, y=%d, p=%d\n",atoi(new_x),atoi(new_y),atoi(point));
+        free(new_x);new_x=NULL;
+        free(new_y);new_y=NULL;
+        free(point);point=NULL;
+        free(reply_mvf);
+        reply_mvf=NULL;
+    }else if(strncmp("GOBYE",(char*)reply_msg,5)==0){
+        void *bye=malloc(3);
+        inc =0;
+        while (inc<3){
+            int r=recv(connection_socket,bye+inc,3-inc,0);
+            if (r==-1){   
+                perror("prolem while receiving\n");
                 free(bye);
                 bye=NULL;
+                free(reply_msg);
+                reply_msg=NULL;
                 close(connection_socket);
-
+                exit(1);
             }
+            inc+=r;    
         }
+        free(bye);
+        bye=NULL;
+        close(connection_socket);
     }
 
     free(reply_msg);
@@ -302,6 +285,7 @@ void get_list_req(int connection_socket)
     
 
 }
+
 void get_list_res(int connection_socket)
 {
     printf("get list while playing\n");

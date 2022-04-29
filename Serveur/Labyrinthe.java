@@ -1,6 +1,4 @@
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Random;
 
 public class Labyrinthe {
@@ -10,7 +8,7 @@ public class Labyrinthe {
     }
 
     class Cellul{
-        boolean route=true;
+        boolean route=false;
         ArrayList<Fantome> ls_fantomes=null;
     }
 
@@ -46,7 +44,7 @@ public class Labyrinthe {
 
         for (int i = 0; i < hauteur; i++) {
             for (int j = 0; j < largeur; j++) {
-                matrice[i][j].route= false;
+                matrice[i][j]= new Cellul();
             }
         }
 

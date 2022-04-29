@@ -10,7 +10,7 @@ public class Partie {
     private byte numero;
     private Labyrinthe labyrinthe = new Labyrinthe();
     HashMap<String, Player> joueurs;
-    Byte nb_start = 0;
+    private Byte nb_start = 0;
     private InetSocketAddress multicast;
     private ArrayList<Thread_fantome> liste_thread_fontomes=new ArrayList<>();
 
@@ -45,9 +45,7 @@ public class Partie {
     }
 
     synchronized boolean add_player(Player player) {
-        if (joueurs.size() == 255)
-            return false;
-        if (joueurs.containsKey(player.getid()))
+        if (joueurs.size() == 255 || joueurs.containsKey(player.getid()))
             return false;
         joueurs.put(player.getid(), player);
         player.setgame(this);
@@ -58,6 +56,13 @@ public class Partie {
         joueurs.remove(player.getid());
         if (joueurs.size() == 0)
             return true;
+
+        if(nb_start==this.getnbjoueur()){
+            Serveur.list_parties_nc.remove(this.getnumero());
+            Serveur.list_parties_c.put(this.getnumero(), this);
+            this.notifyAll();
+        }
+
         return false;
     }
 
@@ -261,6 +266,7 @@ public class Partie {
             dso.send(dp);
         }
 
+        dso.close();
 
     }
 

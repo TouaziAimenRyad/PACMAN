@@ -2,7 +2,6 @@
 #include "joueur_avant_deb.h"
 void connection_reply(int connection_socket)
 {
-        printf("connection reply\n");
         void * buff=malloc(13);
         int inc=0;
         while (inc<10)
@@ -54,7 +53,6 @@ void connection_reply(int connection_socket)
 
 void regstr_reply(int connection_socket)
 {   
-    printf("registre reply\n");
     char *buff=malloc(5);
     int inc=0;
     while (inc<5)
@@ -70,7 +68,6 @@ void regstr_reply(int connection_socket)
         }
         inc+=r;    
     }
-
 
     if(strncmp(buff,"REGNO",5)==0)
     {
@@ -124,7 +121,6 @@ void regstr_reply(int connection_socket)
 
 void reg_new_partie(int connection_socket,char *id ,char* udp_port)
 {
-    printf("registre new partie\n");
     //id and udp port must be created using malloc so we can avoid them overflowing
     char * buff=malloc(22);
     sprintf(buff,"NEWPL %s %s***",id,udp_port);
@@ -147,7 +143,6 @@ void reg_new_partie(int connection_socket,char *id ,char* udp_port)
 
 void reg_partie_existant(int connection_socket,char *id ,char* udp_port,int game)
 {
-    printf("registre partie existant\n");
     void * buff=malloc(24);
 
     sprintf((char *)buff,"REGIS %s %s ",id,udp_port);
@@ -170,7 +165,6 @@ void reg_partie_existant(int connection_socket,char *id ,char* udp_port,int game
 
 void unreg(int connection_socket)
 {
-    printf("unregistre\n");
     if (send(connection_socket,"UNREG***",8,0)<8)
     {
         perror("prolem while sending\n");
@@ -243,7 +237,6 @@ void unreg(int connection_socket)
 
 void lab_size(int connection_socket,int partie)
 {
-    printf("lab size\n");
     void * buff=malloc(11);
     sprintf((char*)buff,"%s","SIZE? ");
     *((uint8_t*)(buff+6))=(uint8_t)partie;
@@ -325,7 +318,6 @@ void lab_size(int connection_socket,int partie)
 
 void palyers_list(int connection_socket,int partie)
 {
-    printf("player list before playng\n");
     void * buff=malloc(10);
     sprintf((char*)buff,"%s","LIST? ");
     *((uint8_t*)(buff+6))=(uint8_t)partie;
@@ -432,7 +424,6 @@ void palyers_list(int connection_socket,int partie)
 
 void partie_noncom_list(int connection_socket)
 {
-    printf("partie noncommencer\n");
     if (send(connection_socket,"GAME?***",8,0)<8)
     {
         perror("prolem while sending\n");
@@ -477,7 +468,7 @@ void partie_noncom_list(int connection_socket)
         int num_partie=*((uint8_t *)(ogame+6));
         int nb_player_per_partie=*((uint8_t *)(ogame+8));
 
-        printf("\t partie num : %d    avec %d joueurs\n",num_partie,nb_player_per_partie);
+        printf("\tpartie num : %d    avec %d joueurs\n",num_partie,nb_player_per_partie);
         free(ogame);
         ogame=NULL;              
     }

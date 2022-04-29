@@ -90,13 +90,13 @@ public class Comm_client implements Runnable {
         }
 
     }
-
+    
+    //GAME REQUEST
     private void game_req() throws Exception {
 
         byte[] buff = new byte[10];
         int offset = 0;
 
-        InputStream in=player.get_in();
         OutputStream out=player.get_out();
 
         // send games and list of ogams
@@ -160,14 +160,21 @@ public class Comm_client implements Runnable {
             inc += nb;
         }
 
+        //joueur deja inscrit
+        if(player.getgame()!=null){
+            out.write(External.REGNO, 0, External.REGNO.length);
+            out.flush();
+            return;
+        }
+
         try {
-            // set id player
-            player.setid(new String(buff, 1, 8));
+            assert (new String(buff, 14, 3).equals(new String(External.ETOILES, 0, External.ETOILES.length)));
             // set port player
             int p = Integer.valueOf(new String(buff, 10, 4));
-            assert (p > 1023 && p < 65536);
+            assert (p > 1023 && p < 10000 && buff[0]==(byte)' ' && buff[9]==(byte)' ');
+            // set id player
+            player.setid(new String(buff, 1, 8));
             player.setport(p);
-            assert (new String(buff, 14, 3).equals(new String(External.ETOILES, 0, External.ETOILES.length)));
         } catch (Exception e) {
             // msg not in the right format
             out.write(External.REGNO, 0, External.REGNO.length);
@@ -203,7 +210,9 @@ public class Comm_client implements Runnable {
         out.flush();
 
     }
-
+    
+    // modifier
+    // partie d'ajout du joueur dans la partie  dans le bloc syncroniz de list de partie
     private void join_game() throws Exception {
 
         byte[] buff = new byte[19];
@@ -223,15 +232,22 @@ public class Comm_client implements Runnable {
             inc += nb;
         }
 
+        //joueur deja inscrit
+        if(player.getgame()!=null){
+            out.write(External.REGNO, 0, External.REGNO.length);
+            out.flush();
+            return;
+        }
+
         try {
-            // set id player
-            player.setid(new String(buff, 1, 8));
             // set port player
             int p = Integer.valueOf(new String(buff, 10, 4));
-            assert (p > 1023 && p < 65536);
+            assert (p > 1023 && p < 10000 && buff[0]==(byte)' ' && buff[9]==(byte)' ');
+            assert (new String(buff, 16, 3).equals(new String(External.ETOILES, 0, External.ETOILES.length)));
+            // set id player
+            player.setid(new String(buff, 1, 8));
             player.setport(p);
             n_game = buff[15];
-            assert (new String(buff, 16, 3).equals(new String(External.ETOILES, 0, External.ETOILES.length)));
         } catch (Exception e) {
             // msg not in the right format
             out.write(External.REGNO, 0, External.REGNO.length);
@@ -247,12 +263,13 @@ public class Comm_client implements Runnable {
                 return;
             }
             partie = Serveur.list_parties_nc.get(n_game);
-        }
+            
+            if (!partie.add_player(player)) {
+                out.write(External.REGNO, 0, External.REGNO.length);
+                out.flush();
+                return;
+            }
 
-        if (!partie.add_player(player)) {
-            out.write(External.REGNO, 0, External.REGNO.length);
-            out.flush();
-            return;
         }
 
         player.setgame(partie);
@@ -265,6 +282,8 @@ public class Comm_client implements Runnable {
         out.flush();
     }
 
+    //modifer 
+    //comment lancer les thread endordmie dans la fonction qui suprimme le jouer
     private void unregister_game() throws Exception {
 
         byte[] Buff = new byte[10];
@@ -304,14 +323,6 @@ public class Comm_client implements Runnable {
                 Serveur.list_parties_nc.remove(num);
                 Serveur.nb_partie--;
                 Serveur.set_socket_multi.remove(game.get_multicast());
-            }
-        }
-
-        synchronized(game){
-            if(game.nb_start==game.getnbjoueur()){
-                game.notifyAll();
-                Serveur.list_parties_nc.remove(game.getnumero());
-                Serveur.list_parties_c.put(game.getnumero(), game);
             }
         }
         
@@ -369,7 +380,7 @@ public class Comm_client implements Runnable {
 
         synchronized (partie) {
             byte s = partie.getnbjoueur();
-
+            //verifier qu'il existe des joueur donc la partie existe
             if (s == 0) {
                 out.write(External.DUNNO, 0, External.DUNNO.length);
                 out.flush();
@@ -444,6 +455,7 @@ public class Comm_client implements Runnable {
 
         short h, l;
 
+        //synchrinizer a cause de la desincription 
         synchronized (partie) {
             h = partie.get_hauteur();
             l = partie.get_largeur();
@@ -476,12 +488,6 @@ public class Comm_client implements Runnable {
         InputStream in=player.get_in();
         OutputStream out=player.get_out();
 
-        if (player.getgame() == null) {
-            out.write(External.DUNNO, 0, External.DUNNO.length);
-            out.flush();
-            return;
-        }
-
         while (inc < buff.length) {
             nb = in.read(buff, inc, buff.length - inc);
             if (nb == -1) {
@@ -491,29 +497,24 @@ public class Comm_client implements Runnable {
             inc += nb;
         }
 
-        if (!new String(buff, 0, 3).equals(new String(External.ETOILES))) {
+        Partie game = player.getgame();
+
+        //non inscrit dans une partie ou format incorrect
+        if (!new String(buff, 0, 3).equals(new String(External.ETOILES)) ||  game == null) {
             out.write(External.DUNNO, 0, External.DUNNO.length);
             out.flush();
             return;
         }
+        
+        start = true;
 
-        Partie game = player.getgame();
-
-        if (game == null) {
-            out.write(External.DUNNO, 0, External.DUNNO.length);
-            out.flush();
-            return;
-        } else {
-            start = true;
-
-            player.set_ij();
-            synchronized (game) {
-                game.incnbstart();
-                if (game.getnbstart() == game.getnbjoueur()){
-                    game.notifyAll();
-                }else
-                    game.wait();
-            }
+        player.set_ij();
+        synchronized (game) {
+            game.incnbstart();
+            if (game.getnbstart() == game.getnbjoueur()){
+                game.notifyAll();
+            }else
+                game.wait();
         }
 
     }

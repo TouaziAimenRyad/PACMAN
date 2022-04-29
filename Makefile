@@ -6,7 +6,7 @@
   all : joueur Serveur.class
 
   joueur : aux.o joueur.o joueuer_multicast.o joueur_udp.o joueur_avant_deb.o joueur_debut.o joueur_pendant.o
-	$(CC) -o joueur joueur.o joueuer_multicast.o joueur_udp.o joueur_avant_deb.o aux.o joueur_debut.o joueur_pendant.o
+	$(CC) $(CFLAGS) -o joueur joueur.o joueuer_multicast.o joueur_udp.o joueur_avant_deb.o aux.o joueur_debut.o joueur_pendant.o
   
   joueur.o : Joueur/joueur.c
 	$(CC) $(CFLAGS) -o joueur.o -c Joueur/joueur.c

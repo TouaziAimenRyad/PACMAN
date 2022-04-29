@@ -15,7 +15,7 @@ void * recv_udp_message(void * arg)
         int rec=recv(sock,buff,218,0);
         buff[rec]='\0';
         strncpy(id,buff+6,8);
-        printf("received from : %s \n\t message: %s",id,buff+15);
+        printf("\nreceived from : %s \n\t message: %s\n",id,buff+15);
 
     }
     
