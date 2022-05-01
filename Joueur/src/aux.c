@@ -21,7 +21,38 @@ char * remove_hashtags(char*src)
     char * d=malloc(ip_len);
     strncpy(d,src,ip_len);
     return d;
+}
 
-    
+void vider_buffer()
+{
+    char c[1];
+    while(strncmp(c,"\n",1))
+    {
+        read(0,c,1);
+    }
+}
 
+void lire_chaine(char *s,int n)
+{
+    char *M;
+    if(read(0,s,n)!=-1)
+    {
+        M=strchr(s,'\n');
+        if(M!=NULL)
+        {
+            *M='A';
+        }
+        else
+        {
+            vider_buffer();
+        }
+    }
+    else
+    {
+        vider_buffer();
+    }
+}
+
+void lire_entier(int *x){
+    scanf("%d",x);
 }

@@ -48,8 +48,7 @@ public class Comm_client implements Runnable {
                 }
                 inc += nb;
             }
-
-            switch (new String(buff)) {
+            switch (new String(buff,0,5)) {
                 case External.UNREG:
                     unregister_game();
                     break;
@@ -60,6 +59,20 @@ public class Comm_client implements Runnable {
                     list_of_players();
                     break;
                 case External.GAME_REQ:
+                    inc = 0;
+                    // read the first part of request
+                    while (inc < 3) {
+                        nb = in.read(buff, inc, 3 - inc);
+                        if (nb == -1) {
+                            return;
+                        }
+                        inc += nb;
+                    }
+                    if(! new String(buff, 0, 3).equals(new String(External.ETOILES, 0, External.ETOILES.length))){
+                        out.write(External.DUNNO, 0, External.DUNNO.length);
+                        out.flush();
+                        break;
+                    }
                     game_req();
                     break;
                 case External.NEWLP:
@@ -535,8 +548,11 @@ public class Comm_client implements Runnable {
         // on attend que tu le monde a recue les message de debut
         synchronized (game) {
             if (game.getnbstart() == 0){
-                Serveur.list_parties_nc.remove(game.getnumero());
-                Serveur.list_parties_c.put(game.getnumero(), game);
+                synchronized(Serveur.syn_nb_partie){
+                    Serveur.list_parties_nc.remove(game.getnumero());
+                    Serveur.list_parties_c.put(game.getnumero(), game);
+                    Serveur.nb_partie--;
+                }
                 game.notifyAll();
                 game.lunch_fontomes_threads();
             }else
@@ -1026,7 +1042,7 @@ public class Comm_client implements Runnable {
             inc+=r;
         }
 
-        while(inc<213){
+        while(inc<203){
             r=in.read(buff,inc,3);
             if(r==-1){
                 start=null;
@@ -1046,37 +1062,36 @@ public class Comm_client implements Runnable {
 
         Partie game= player.getgame();
 
-        synchronized(game){
-            Player player_2 = game.joueurs.get(new String(buff,1,8));
+        Player player_2 = game.joueurs.get(new String(buff,1,8));
             
-            if (player_2==null){
-                out.write(External.NSEND_REP,0,External.NSEND_REP.length);
-                out.flush();
-                return;
-            }
-
-
-            byte buff2[] =new byte[5+inc];
-            int offset=0;
-            External.arraycopy(buff2, offset, External.UDP_SEND, 0, External.UDP_SEND.length);
-            offset+=External.UDP_SEND.length;
-            External.arraycopy(buff, offset, player.getid().getBytes(),0, player.getid().getBytes().length);
-            offset+=player.getid().getBytes().length;
-            buff2[offset]=(byte)' ';
-            offset++;
-            External.arraycopy(buff2, offset,buff, 10, inc-13);
-            offset+=inc-13;
-            External.arraycopy(buff2, offset,External.PLUSS, 0, External.PLUSS.length);
-            DatagramPacket dp=new DatagramPacket(buff2, buff2.length,new InetSocketAddress(player_2.getAddress(), player_2.getPort()));
-            
-            DatagramSocket dso=new DatagramSocket();
-            dso.send(dp);
-
-            out.write(External.SEND_REP,0,External.SEND_REP.length);
+        if (player_2==null){
+            out.write(External.NSEND_REP,0,External.NSEND_REP.length);
             out.flush();
-
+            return;
         }
 
+
+        byte buff2[] =new byte[5+inc];
+        int offset=0;
+        External.arraycopy(buff2, offset, External.UDP_SEND, 0, External.UDP_SEND.length);
+        offset+=External.UDP_SEND.length;
+        External.arraycopy(buff2, offset, player.getid().getBytes(),0, player.getid().getBytes().length);
+        offset+=player.getid().getBytes().length;
+        buff2[offset]=(byte)' ';
+        offset++;
+        External.arraycopy(buff2, offset,buff, 10, inc-13);
+        offset+=inc-13;
+        External.arraycopy(buff2, offset,External.PLUSS, 0, External.PLUSS.length);
+        DatagramPacket dp=new DatagramPacket(buff2, buff2.length,new InetSocketAddress(player_2.getAddress(), player_2.getPort()));
+        
+        out.write(External.SEND_REP,0,External.SEND_REP.length);
+        out.flush();
+        System.out.println(new String(buff2));
+        DatagramSocket dso=new DatagramSocket();
+        synchronized(player_2){
+            dso.send(dp);
+        }
+        dso.close();
 
     }
 
@@ -1110,7 +1125,7 @@ public class Comm_client implements Runnable {
         }
 
         if(!new String(buff,inc-3,3).equals(new String(External.ETOILES)) || buff[0]!=(byte)' '){
-            out.write(External.NSEND_REP,0,External.NSEND_REP.length);
+            out.write(External.DUNNO,0,External.DUNNO.length);
             out.flush();
             return;
         }

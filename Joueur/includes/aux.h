@@ -16,5 +16,8 @@
 #define AUX_H_
 void PrependZeros(char *dest, const char *src, unsigned minimal_width);
 char* remove_hashtags(char* src);
+void lire_chaine(char *s,int n);
+void vider_buffer();
+void lire_entier(int *x);
 
 #endif 

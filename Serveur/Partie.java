@@ -8,11 +8,11 @@ import java.util.Random;
 public class Partie {
 
     private byte numero;
-    private Labyrinthe labyrinthe = new Labyrinthe();
     HashMap<String, Player> joueurs;
     private Byte nb_start = 0;
     private InetSocketAddress multicast;
     private ArrayList<Thread_fantome> liste_thread_fontomes=new ArrayList<>();
+    private Labyrinthe labyrinthe;
 
     public Partie(byte numero, InetSocketAddress isa) {
         this.numero = numero;
@@ -20,10 +20,16 @@ public class Partie {
         this.joueurs = new HashMap<>();
     }
 
+    void init_labyrinthe(){
+        labyrinthe = new Labyrinthe(this);
+    }
     byte getnumero() {
         return numero;
     }
 
+    void add_thread_fontome(Labyrinthe.Fantome f,short i,short j){
+        liste_thread_fontomes.add(new Thread_fantome(f, i, j));
+    }
     byte get_nb_fontomes() {
         return labyrinthe.get_nb_fontomes();
     }
@@ -154,8 +160,6 @@ public class Partie {
         int offset=0;
         External.arraycopy(buf, offset,External.UDP_MAIL,0, External.UDP_MAIL.length);
         offset+=External.UDP_MAIL.length;
-        buf[offset]=(byte)' ';
-        offset++;
         External.arraycopy(buf, offset,id.getBytes(),0, id.getBytes().length);
         offset+=id.getBytes().length;
         buf[offset]=(byte)' ';
@@ -214,22 +218,6 @@ public class Partie {
         dso.close();
     }
 
-    void move_fantome(){
-        Labyrinthe.Cellul[][] matrice=labyrinthe.get_matrice();
-        ArrayList<Labyrinthe.Fantome> lf;
-        for(short i=0;i<get_hauteur();i++){
-            for(short j=0;j<get_hauteur();j++){
-                lf=matrice[i][j].ls_fantomes;
-                if(lf==null) 
-                    continue;
-                for(Labyrinthe.Fantome f :lf){
-                    liste_thread_fontomes.add( new Thread_fantome(f, i, j));
-                }
-            }
-
-        }
-    }
-
     void lunch_fontomes_threads(){
         for(Thread t :liste_thread_fontomes)t.start();
         liste_thread_fontomes=null;
@@ -262,6 +250,7 @@ public class Partie {
 
         DatagramPacket dp=new DatagramPacket(buff, buff.length,multicast);
 
+        System.out.println(new String(buff));
         synchronized(multicast){
             dso.send(dp);
         }
@@ -270,11 +259,11 @@ public class Partie {
 
     }
 
-    private class Thread_fantome extends Thread{
+    class Thread_fantome extends Thread{
         Labyrinthe.Fantome f;
         short i,j;
 
-        private Thread_fantome(Labyrinthe.Fantome fa,short i,short j){
+        Thread_fantome(Labyrinthe.Fantome fa,short i,short j){
             f=fa;
             this.i=i;
             this.j=j;
@@ -285,9 +274,10 @@ public class Partie {
             Random r=new Random();
             while(labyrinthe.get_nb_fontomes()!=0 && !f.capturer){
                 try {
-                    sleep(r.nextInt(20)+10);
+                    sleep((r.nextInt(50)+10)*1000);
                     move();
                 } catch (Exception e) {
+                    e.printStackTrace();
                    return;
                 }
             }
@@ -370,9 +360,13 @@ public class Partie {
             Labyrinthe.Cellul cel_prec=labyrinthe.get_matrice()[i_prec][j_prec];
             synchronized(cel_prec){
                 cel_prec.ls_fantomes.remove(f);
+                if(cel_prec.ls_fantomes.size()==0)
+                    cel_prec.ls_fantomes=null;
             } 
             Labyrinthe.Cellul new_cel=labyrinthe.get_matrice()[new_i][new_j];
             synchronized(new_cel){
+                if(new_cel.ls_fantomes==null)
+                    new_cel.ls_fantomes=new ArrayList<>();
                 new_cel.ls_fantomes.add(f);
             } 
         }

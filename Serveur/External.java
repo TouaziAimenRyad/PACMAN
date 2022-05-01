@@ -23,7 +23,7 @@ public abstract class External {
     static byte[] NSEND_REP ="NSEND***".getBytes();
     static byte[] UDP_SEND= "MESSP ".getBytes();
     static byte[] PLUSS= "+++".getBytes();
-    static byte[] MAIL_REP= "MALL!".getBytes();
+    static byte[] MAIL_REP= "MALL!***".getBytes();
     static byte[] UDP_MAIL= "MESSA ".getBytes();
     static byte[] CAPTURE_FAN="SCORE ".getBytes();
     static byte[] GHOST="GHOST ".getBytes();

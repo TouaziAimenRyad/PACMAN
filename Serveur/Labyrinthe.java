@@ -28,15 +28,15 @@ public class Labyrinthe {
         return matrice;
     }
 
-    public Labyrinthe() {
-        init((short) 50, (short) 50);
+    public Labyrinthe(Partie p) {
+        init((short) 50, (short) 50,p);
     }
 
-    public Labyrinthe(short hauteur, short largeur) {
-        init(hauteur, largeur);
+    public Labyrinthe(short hauteur, short largeur,Partie p) {
+        init(hauteur, largeur,p);
     }
 
-    public void init(short hauteur, short largeur) {
+    public void init(short hauteur, short largeur,Partie p) {
         this.hauteur = hauteur;
         this.largeur = largeur;
         this.nb_fontomes = (byte)(hauteur * largeur / 16);
@@ -93,19 +93,21 @@ public class Labyrinthe {
             }
         }
 
-        byte n = 0;
+        int n = 0;
         int i, j;
-        while (n < nb_fontomes) {
+        Fantome f;
+        while (n < (nb_fontomes & 0xff)) {
             i = r.nextInt(this.get_hauteur());
             j = r.nextInt(this.get_largeur());
             if (matrice[i][j].route) {
                 n++;
                 if(matrice[i][j].ls_fantomes==null)
                     matrice[i][j].ls_fantomes=new ArrayList<>();
-                matrice[i][j].ls_fantomes.add(new Fantome());
+                f=new Fantome();
+                matrice[i][j].ls_fantomes.add(f);
+                p.add_thread_fontome(f, (short)i, (short)j);
             }
         }
-
     }
 
     public boolean valid(int i, int j) {
@@ -121,7 +123,7 @@ public class Labyrinthe {
     void capture(Player player,short i,short j) throws Exception{
         
         ArrayList<Fantome> ls=matrice[i][j].ls_fantomes;
-        
+        if(ls==null)return;
         for(Fantome f : ls){
             boolean b=false;
 
@@ -147,19 +149,6 @@ public class Labyrinthe {
 
     synchronized void desinc_nb_fontomes(){
         nb_fontomes--;
-    }
-
-    public static void main(String[] args) {
-        Labyrinthe l = new Labyrinthe((short) 100, (short) 100);
-        for (int i = 0; i < l.hauteur; i++) {
-            for (int j = 0; j < l.largeur; j++) {
-                if (l.matrice[i][j].route)
-                    System.out.print( "  ");
-                else 
-                System.out.print("* ");
-            }
-            System.out.println();
-        }
     }
 
 }

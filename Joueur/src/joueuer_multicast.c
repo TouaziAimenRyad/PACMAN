@@ -1,54 +1,39 @@
 
 #include "joueur_multicast.h"
 
-void* recv_muilti_def(void* args) //!!!!!!!! probleme
-{ 
+void* recv_muilti_def(void* args){ //!!!!!!!! probleme 
     //receive by paquets not all at once cause your not sur of the size
     int multicast_sock=*((int *)args);
-    void *buff=malloc(218);
-    while (1)
+    char buff[218];
+    char *x,*y,*id,*point,*message;
+    while(1)
     {
         int r=recv(multicast_sock,buff,218,0);
-        if(strncmp((char *)(buff),"GHOST",5)==0)
-        {
-            char * x=malloc(3);
-            strncpy(x,(char*)(buff+6),3);
-            char * y=malloc(3);
-            strncpy(y,(char*)(buff+6+4),3);
+        if(strncmp(buff,"GHOST",5)==0){
+            x=buff+6;
+            x[3]='\0';
+            y=buff+10;
+            y[3]='\0';
             printf("position GHOST x=%s y=%s\n",x,y);
-            free(x);x=NULL;
-            free(y);y=NULL;
-            
         }
-
-        if(strncmp((char *)(buff),"SCORE",5)==0)
+        else if(strncmp(buff,"SCORE",5)==0)
         {
-            char *id=malloc(8);
-            strncpy(id,(char*)(buff+6),8);
-            char *point=malloc(4);
-            strncpy(point,(char*)(buff+6+9),4);
-            char * x=malloc(3);
-            strncpy(x,(char*)(buff+6+9+5),3);
-            char * y=malloc(3);
-            strncpy(y,(char*)(buff+6+9+5+4),3);
+            id=buff+6;
+            id[8]='\0';
+            point=buff+15;
+            point[4]='\0';
+            x=buff+20;
+            x[3]='\0';
+            y=buff+24;
+            y[3]='\0';
             printf("score SCORE id=%s point=%s x=%s y=%s\n",id,point,x,y);
-            free(id);id=NULL;
-            free(point);point=NULL;
-            free(x);x=NULL;
-            free(y);y=NULL;
-            
         }
-         if(strncmp((char *)(buff),"MESSA",5)==0)
-        {
-            char *id=malloc(8);
-            strncpy(id,(char*)(buff+6),8);
-            char * message=malloc(r-18);
-            strncpy(message,(char*)(buff+6+9),r-18);
+        else if(strncmp(buff,"MESSA",5)==0){
+            id=buff+6;
+            id[8]='\0';
+            message=buff+15;
+            message[r-18]='\0';
             printf("message MESSA id=%s message=%s\n",id,message);
-            free(id);id=NULL;
-            free(message);message=NULL;
-            
-            
         }
     }
     
@@ -62,6 +47,10 @@ void abonner_multi(char * ip_multicast,char* port_multicast)
     sock=socket(PF_INET,SOCK_DGRAM,0);
     int ok=1;
     int r=setsockopt(sock,SOL_SOCKET,SO_REUSEPORT,&ok,sizeof(ok));
+    if(r!=0){
+        perror("error");
+        exit(1);
+    }
     struct sockaddr_in address_sock;
     address_sock.sin_family=AF_INET;
     address_sock.sin_port=htons(atoi(port_multicast));

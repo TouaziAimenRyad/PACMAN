@@ -3,7 +3,7 @@
   INCLUDE=Joueur/includes
   CFLAGS+= -g -o1 -Wall -Wextra -pthread -I $(INCLUDE)
   
-  all : joueur Serveur.class
+  all : joueur distclean_j Serveur.class distclean_c
 
   joueur : aux.o joueur.o joueuer_multicast.o joueur_udp.o joueur_avant_deb.o joueur_debut.o joueur_pendant.o
 	$(CC) $(CFLAGS) -o joueur joueur.o joueuer_multicast.o joueur_udp.o joueur_avant_deb.o aux.o joueur_debut.o joueur_pendant.o
@@ -32,5 +32,8 @@
   Serveur.class : Serveur/Serveur.java
 	$(JV) -cp Serveur/ Serveur/Serveur.java
   
-  distclean : 
+  distclean_j : 
+	rm -rf Serveur/*.class
+  
+  distclean_c : 
 	rm -rf *.o

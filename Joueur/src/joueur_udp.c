@@ -8,14 +8,17 @@ void * recv_udp_message(void * arg)
     adress_sock.sin_family=AF_INET;
     adress_sock.sin_port=htons(port);
     int r=bind(sock,(struct sockaddr *)&adress_sock,sizeof(struct sockaddr_in));
-    char buff[218];
-    char id[8];
+    if(r!=0){
+        perror("erreur lors du bind\n");
+        exit(1);
+    }
+    char buff[219];
     while (1)
     {
         int rec=recv(sock,buff,218,0);
-        buff[rec]='\0';
-        strncpy(id,buff+6,8);
-        printf("\nreceived from : %s \n\t message: %s\n",id,buff+15);
+        buff[rec-3]='\0';
+        buff[15]='\0';
+        printf("received from : %s \n\t message: %s\n",(char*)buff+6,(char*)buff+15);
 
     }
     

@@ -45,27 +45,11 @@ public class Serveur {
         InetSocketAddress ret = null;
 
         while (true) {
-            min = 224;
-            max = 239;
-            int c = (int) Math.floor(Math.random() * (max - min + 1) + min);
-            min = 0;
-            max = 255;
-            int c1 = (int) Math.floor(Math.random() * (max - min + 1) + min);
-            min = 0;
-            max = 255;
-            int c2 = (int) Math.floor(Math.random() * (max - min + 1) + min);
-            min = 1;
-            max = 254;
-            int c3 = (int) Math.floor(Math.random() * (max - min + 1) + min);
-
-            String ip = String.valueOf(c) + "." + String.valueOf(c1) + "." + String.valueOf(c2) + "."
-                    + String.valueOf(c3);
-
             min = 1024;
             max = 9999;
             port = (short) Math.floor(Math.random() * (max - min + 1) + min);
 
-            ret = new InetSocketAddress(ip, port);
+            ret = new InetSocketAddress("226.194.197.139", port);
             if (!set_socket_multi.contains(ret)) {
                 set_socket_multi.add(ret);
                 break;
@@ -82,6 +66,7 @@ public class Serveur {
         // peutetre une erreur si on a plus de adr port de multicast
         InetSocketAddress isa = generate_udp_multicast();
         Partie partie = new Partie(n, isa);
+        partie.init_labyrinthe();
         partie.add_player(player);
         list_parties_nc.put(n, partie);
         nb_partie++;
