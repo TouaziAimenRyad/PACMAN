@@ -351,12 +351,10 @@ void send_private_msg(int connection_socket,char* id,char *message)
 
     if(!strncmp(server_reply,"SEND!",5))
     {
-        close(connection_socket);
         printf("message sent \n");
     }    
     else if(!strncmp(server_reply,"NSEND",5))
     {
-        close(connection_socket);
         printf("can't send msg  %s\n",(char *)(server_reply));
     }
     else if(!strncmp(server_reply,"GOBYE",5))

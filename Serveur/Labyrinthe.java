@@ -123,7 +123,9 @@ public class Labyrinthe {
     void capture(Player player,short i,short j) throws Exception{
         
         ArrayList<Fantome> ls=matrice[i][j].ls_fantomes;
+        ArrayList<Fantome> rfs=new ArrayList<>();
         if(ls==null)return;
+
         for(Fantome f : ls){
             boolean b=false;
 
@@ -131,24 +133,33 @@ public class Labyrinthe {
                 if (!f.capturer && ls.contains(f)){
                     f.capturer=true;
                     b=true;
-                    ls.remove(f);
+                    rfs.add(f);
                 }
             }
 
             if(b){
-                player.getgame().envoie_capture(player,i,j);
                 player.incscore();
                 desinc_nb_fontomes();
-                if (nb_fontomes==0) 
+                player.getgame().envoie_capture(player,i,j);
+                if (nb_fontomes==0) {
                     player.set_game_finisher(true);
+                    player.getgame().endga();
+                }
             }
 
         }
+
+        ls.removeAll(rfs);
+
 
     }
 
     synchronized void desinc_nb_fontomes(){
         nb_fontomes--;
+    }
+
+    void set_nb_fontomes(byte i){
+        nb_fontomes=i;
     }
 
 }

@@ -30,6 +30,13 @@ public class Partie {
     void add_thread_fontome(Labyrinthe.Fantome f,short i,short j){
         liste_thread_fontomes.add(new Thread_fantome(f, i, j));
     }
+
+    void set_nb_fontome(byte i){
+        synchronized(labyrinthe){
+            labyrinthe.set_nb_fontomes(i);
+        }
+    }
+
     byte get_nb_fontomes() {
         return labyrinthe.get_nb_fontomes();
     }
@@ -114,7 +121,7 @@ public class Partie {
         short i=player.get_i();
         short j=player.get_j();
 
-        while (j-1 < get_largeur() && matrice[i][j-1].route && d > 0 ) {
+        while (j-1 > 0 && matrice[i][j-1].route && d > 0 ) {
             j--;
             d--;
             labyrinthe.capture(player,i,j);
@@ -218,9 +225,54 @@ public class Partie {
         dso.close();
     }
 
+    void endga() throws Exception{
+        String id=null;
+        Integer score=-1;
+        for(Player p :joueurs.values()){
+            synchronized(p){
+                if( score< p.getscore()){
+                    id=p.getid();
+                    score=p.getscore();
+                }
+            }
+        }
+
+        byte Buff[]=new byte[22];
+        External.arraycopy(Buff, 0, External.ENDGA, 0, External.ENDGA.length);
+        int offset= External.ENDGA.length;
+        External.arraycopy(Buff, offset, id.getBytes(), 0, id.getBytes().length);
+        offset+=8;
+        Buff[offset]=(byte)' ';
+        offset++;
+        String s=String.valueOf(score);
+        while(s.length()<4){
+            s="0"+s;
+        }
+        External.arraycopy(Buff, offset, s.getBytes(), 0, s.getBytes().length);
+        offset+=4;
+        External.arraycopy(Buff, offset, External.ETOILES, 0, External.ETOILES.length);
+
+        DatagramSocket dso=new DatagramSocket();
+        DatagramPacket dp=new DatagramPacket(Buff, Buff.length,multicast);
+
+        synchronized(multicast){
+            dso.send(dp);
+        }
+        dso.close();
+    }
+
     void lunch_fontomes_threads(){
-        for(Thread t :liste_thread_fontomes)t.start();
+        if(liste_thread_fontomes!=null)
+            for(Thread t :liste_thread_fontomes)t.start();
         liste_thread_fontomes=null;
+        /*for(Labyrinthe.Cellul[] l : labyrinthe.get_matrice()){
+            for(Labyrinthe.Cellul c : l){
+                if(c.route)System.out.print(" ");
+                else System.out.print("*");
+            }
+            System.out.println();
+        }*/
+
     }
 
     void send_pos_fon(Short i,Short j) throws Exception{
@@ -249,8 +301,6 @@ public class Partie {
         External.arraycopy(buff, offset, External.PLUSS, 0, External.PLUSS.length);
 
         DatagramPacket dp=new DatagramPacket(buff, buff.length,multicast);
-
-        System.out.println(new String(buff));
         synchronized(multicast){
             dso.send(dp);
         }
@@ -274,7 +324,7 @@ public class Partie {
             Random r=new Random();
             while(labyrinthe.get_nb_fontomes()!=0 && !f.capturer){
                 try {
-                    sleep((r.nextInt(50)+10)*1000);
+                    sleep((r.nextInt(100)+60)*1000);
                     move();
                 } catch (Exception e) {
                     e.printStackTrace();

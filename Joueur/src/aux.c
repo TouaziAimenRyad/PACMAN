@@ -40,7 +40,8 @@ void lire_chaine(char *s,int n)
         M=strchr(s,'\n');
         if(M!=NULL)
         {
-            *M='A';
+            if(n==200)*M='\0';
+            else *M='A';
         }
         else
         {

@@ -25,7 +25,12 @@ public class Comm_client implements Runnable {
             manage_requete();
 
         } catch (Exception e) {
+           try {
             e.printStackTrace();
+                player.fermer_cnx();
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
         }
     }
 
@@ -44,6 +49,7 @@ public class Comm_client implements Runnable {
             while (inc < 5) {
                 nb = in.read(buff, inc, 5 - inc);
                 if (nb == -1) {
+                    player.fermer_cnx();
                     return;
                 }
                 inc += nb;
@@ -97,7 +103,7 @@ public class Comm_client implements Runnable {
 
         game();
 
-        if (start == null) {
+        if ( start == null) {
             player.fermer_cnx();
             return;
         }
@@ -189,6 +195,7 @@ public class Comm_client implements Runnable {
             player.setid(new String(buff, 1, 8));
             player.setport(p);
         } catch (Exception e) {
+            e.printStackTrace();
             // msg not in the right format
             out.write(External.REGNO, 0, External.REGNO.length);
             out.flush();
@@ -296,7 +303,7 @@ public class Comm_client implements Runnable {
     }
 
     //modifer 
-    //comment lancer les thread endordmie dans la fonction qui suprimme le jouer
+    // lancer les thread endordmie dans la fonction qui suprimme le jouer
     private void unregister_game() throws Exception {
 
         byte[] Buff = new byte[10];
@@ -504,7 +511,7 @@ public class Comm_client implements Runnable {
         while (inc < buff.length) {
             nb = in.read(buff, inc, buff.length - inc);
             if (nb == -1) {
-                start = null;
+                start=null;
                 return;
             }
             inc += nb;
@@ -545,7 +552,11 @@ public class Comm_client implements Runnable {
 
         Partie game = player.getgame();
 
-        // on attend que tu le monde a recue les message de debut
+        synchronized (game) {
+            game.decnbrstart();
+        }
+
+        // on attend que tout le monde a recue les message de debut
         synchronized (game) {
             if (game.getnbstart() == 0){
                 synchronized(Serveur.syn_nb_partie){
@@ -644,10 +655,6 @@ public class Comm_client implements Runnable {
         out.write(buff, 0, buff.length);
         out.flush();
 
-        synchronized (game) {
-            game.decnbrstart();
-        }
-
     }
 
     private void send_positions() throws Exception {
@@ -698,21 +705,11 @@ public class Comm_client implements Runnable {
             return;
         }
 
-        Partie game = player.getgame();
-
-        byte num = game.getnumero();
-
-        if (game.remove_player(player)) {
-            synchronized (Serveur.syn_partie_c) {
-                Serveur.list_parties_c.remove(num);
-                Serveur.set_socket_multi.remove(game.get_multicast());
-            }
-        }
-        
-        player.remove_from_game();
-
         out.write(External.GODEBYE, 0, External.GODEBYE.length);
         out.flush();
+
+        player.fermer_cnx();
+
         start = false;
     }
 
@@ -735,11 +732,14 @@ public class Comm_client implements Runnable {
         
         byte nb_font=player.getgame().get_nb_fontomes();
 
-        if(nb_font==0 && !player.get_game_finisher()){
-            out.write(External.GODEBYE, 0, External.GODEBYE.length);
-            out.flush();
-            start=false;
-            return;
+        if(nb_font==0){
+            if(!player.get_game_finisher()){
+                out.write(External.GODEBYE, 0, External.GODEBYE.length);
+                out.flush();
+                start=false;
+                return;
+            }else
+                player.set_game_finisher(false);
         }
         
         out.write(Buff, 0, Buff.length);
@@ -767,14 +767,18 @@ public class Comm_client implements Runnable {
         External.arraycopy(Buff, offset + 1, st.getBytes(), 0, 4);
         offset += 5;
         External.arraycopy(Buff, offset, External.ETOILES, 0, External.ETOILES.length);
-
+        
+        
         byte nb_font=player.getgame().get_nb_fontomes();
 
-        if(nb_font==0 && !player.get_game_finisher()){
-            out.write(External.GODEBYE, 0, External.GODEBYE.length);
-            out.flush();
-            start=false;
-            return;
+        if(nb_font==0){
+            if(!player.get_game_finisher()){
+                out.write(External.GODEBYE, 0, External.GODEBYE.length);
+                out.flush();
+                start=false;
+                return;
+            }else
+                player.set_game_finisher(false);
         }
 
         out.write(Buff, 0, Buff.length);
@@ -797,7 +801,6 @@ public class Comm_client implements Runnable {
             }
             inc += nb;
         }
-
         if (!new String(Buff, 4, 3).equals(new String(External.ETOILES)) || Buff[0]!=(byte)' ') {
             out.write(External.DUNNO, 0, External.DUNNO.length);
             out.flush();
@@ -1012,6 +1015,7 @@ public class Comm_client implements Runnable {
                     External.arraycopy(Buff, offset, st.getBytes(), 0, 4);
                     offset += 4;
                     External.arraycopy(Buff, offset, External.ETOILES, 0, External.ETOILES.length);
+                    offset+=3;
                 }
 
             }
@@ -1063,7 +1067,7 @@ public class Comm_client implements Runnable {
         Partie game= player.getgame();
 
         Player player_2 = game.joueurs.get(new String(buff,1,8));
-            
+        System.out.println("("+new String(buff,1,8)+")");
         if (player_2==null){
             out.write(External.NSEND_REP,0,External.NSEND_REP.length);
             out.flush();

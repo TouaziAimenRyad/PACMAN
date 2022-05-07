@@ -133,6 +133,25 @@ public class Player {
         in.close();
         out.close();
         client.close();
+        if(partie!=null){
+            if(partie.remove_player(this)){
+                synchronized(Serveur.syn_nb_partie){
+                    if(Serveur.list_parties_nc.get(partie.getnumero())!=null){
+                        Serveur.list_parties_nc.remove(partie.getnumero());
+                        Serveur.set_socket_multi.remove(partie.get_multicast());
+                    }
+                }
+
+                synchronized(Serveur.syn_partie_c){
+                    if(Serveur.list_parties_c.get(partie.getnumero())!=null){
+                        Serveur.list_parties_c.remove(partie.getnumero());
+                        Serveur.set_socket_multi.remove(partie.get_multicast());
+                        partie.set_nb_fontome((byte)0);
+                    }
+                }
+                
+            }
+        }
     }
 
     void set_game_finisher(boolean b){

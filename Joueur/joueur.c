@@ -35,8 +35,8 @@ il ya des requetes a envoyer avant que la partie commence
 int main(int argc, char const *argv[]){
     assert(argc==2);
     //generate identifiant sur 8 character soit par scanf soit par random
-    char id[8]; //must be with malloc to avoid problem when passong them as paramaters 
-    char udp_port[4];
+    char id[9]; //must be with malloc to avoid problem when passong them as paramaters 
+    char udp_port[5];
     memset(id,'0',8);
     printf("donner votre id\n");
     lire_chaine(id,8);
@@ -45,7 +45,8 @@ int main(int argc, char const *argv[]){
         memset(udp_port,0,4);
         lire_chaine(udp_port,4);
     }while(1023>=atoi(udp_port) || atoi(udp_port)>9999);
-    
+    id[8]='\0';
+    udp_port[4]='\0';
     /*char player_info[12];
 
     strcat(player_info,id);
@@ -86,7 +87,7 @@ int main(int argc, char const *argv[]){
         while(c==0){
             printf("\ninput your choice\n");
 
-            lire_entier(&choice);//tried with read 0 caused some weird problems
+            scanf("%d",&choice);;//tried with read 0 caused some weird problems
             switch (choice){
                 case 1 :
                     reg_new_partie(connection_socket,id,udp_port);
@@ -132,8 +133,8 @@ int main(int argc, char const *argv[]){
         int choice3;
         int distance;
         int d=0;
-        char buff[200];
-        char id2[8];
+        char buff[201];
+        char id2[9];
         while (d==0)
         {
             printf("input 1 to move up\ninput 2 to move down\ninput 3 to move left\ninput 4 to move right\ninput 5 to get player list\ninput 6 to send mail to all \ninput 7 to send private msg\ninput 8 to quit\n");
@@ -183,6 +184,7 @@ int main(int argc, char const *argv[]){
                 break;
 
                 case 6:
+                    memset(buff,0,strlen(buff));
                     printf("input message \n");
                     lire_chaine(buff,200);
                     send_muilti_def_mail(connection_socket,buff);
@@ -190,12 +192,14 @@ int main(int argc, char const *argv[]){
                 break;
 
                 case 7:
-                    printf("donner l'id du joueur:");
+                    memset(buff,0,strlen(buff));
+                    printf("donner l'id du joueur:\n");
                     memset(id2,'0',8);
+                    id2[8]='\0';
                     lire_chaine(id2,8);
                     printf("send private udp msg\n");
                     lire_chaine(buff,200);
-                    send_private_msg(connection_socket,id,buff);
+                    send_private_msg(connection_socket,id2,buff);
                 break;
 
                 case 8:
