@@ -394,9 +394,9 @@ int afficher_labyrinthe(int connection_socket){
     }
     if(strncmp(buff2,"LABYR",5)==0){
         int inc=0;
-        while (inc<5)
+        while (inc<7)
         {
-            int r=recv(connection_socket,buff2+inc,5-inc,0);
+            int r=recv(connection_socket,buff2+inc,7-inc,0);
             if (r==-1)
             {   
                 perror("prolem while receiving\n");
