@@ -23,6 +23,7 @@ int main(int argc, char const *argv[]){
     //recuperer l'@ de lulu
     struct addrinfo *first_info;
     struct addrinfo hints;
+    memset(&hints,0,sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype =SOCK_STREAM;
     int r=getaddrinfo("lulu.informatique.univ-paris-diderot.fr",NULL,&hints,&first_info);
