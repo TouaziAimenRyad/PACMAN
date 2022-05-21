@@ -1487,7 +1487,6 @@ public class Comm_client implements Runnable {
         }
 
         byte mat[]=player.getgame().get_labyrinthe().getbyte_map();
-
         buff=new byte[12+mat.length];
         int offset=External.LABYR.length;
         External.arraycopy(buff, 0, External.LABYR, 0, External.LABYR.length);
@@ -1506,7 +1505,6 @@ public class Comm_client implements Runnable {
         buff[offset]=(byte)' ';
         offset++;
         External.arraycopy(buff, offset, mat, 0, mat.length);
-        
         out.write(buff, 0, buff.length);
         out.flush();
 
