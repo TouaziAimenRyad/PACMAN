@@ -11,8 +11,8 @@ public class Partie {
     HashMap<String, Player> joueurs;
     private Byte nb_start = 0;
     private InetSocketAddress multicast;
-    private ArrayList<Thread_fantome> liste_thread_fontomes=new ArrayList<>();
-    private Labyrinthe labyrinthe;
+    protected ArrayList<Thread_fantome> liste_thread_fontomes=new ArrayList<>();
+    protected Labyrinthe labyrinthe;
 
     public Partie(byte numero, InetSocketAddress isa) {
         this.numero = numero;
@@ -20,13 +20,16 @@ public class Partie {
         this.joueurs = new HashMap<>();
     }
 
-    void init_labyrinthe(){
-        labyrinthe = new Labyrinthe(this);
+    // fonction qui initialise le labyrinthe
+    void init_labyrinthe(boolean b){
+        labyrinthe = new Labyrinthe(this,b);
     }
+    
     byte getnumero() {
         return numero;
     }
 
+    // fonction qui initialise les thread des fontomes
     void add_thread_fontome(Labyrinthe.Fantome f,short i,short j){
         liste_thread_fontomes.add(new Thread_fantome(f, i, j));
     }
@@ -39,6 +42,10 @@ public class Partie {
 
     byte get_nb_fontomes() {
         return labyrinthe.get_nb_fontomes();
+    }
+
+    Labyrinthe get_labyrinthe(){
+        return labyrinthe;
     }
 
     byte getnbjoueur() {
@@ -57,26 +64,48 @@ public class Partie {
         nb_start--;
     }
 
+    // fonction qui ajoute un joueur dans la partie
     synchronized boolean add_player(Player player) {
         if (joueurs.size() == 255 || joueurs.containsKey(player.getid()))
             return false;
+            
+        String key= player.getAddress().getHostAddress()+String.valueOf(player.getPort());       
+
+        synchronized(Serveur.set_udp){
+            if (Serveur.set_udp.contains(key)) return false;
+            Serveur.set_udp.add(key);
+        }
+        
         joueurs.put(player.getid(), player);
         player.setgame(this);
         return true;
     }
 
+    // fonction qui suprimme un joueur de la partie
     synchronized boolean remove_player(Player player) {
         joueurs.remove(player.getid());
+
+        String key= player.getAddress().getHostAddress()+String.valueOf(player.getPort());       
+
+        synchronized(Serveur.set_udp){
+            Serveur.set_udp.remove(key);
+        }
+        
+
         if (joueurs.size() == 0)
             return true;
 
         if(nb_start==this.getnbjoueur()){
             Serveur.list_parties_nc.remove(this.getnumero());
-            Serveur.list_parties_c.put(this.getnumero(), this);
+            Serveur.list_parties_c.add(this);
             this.notifyAll();
         }
 
         return false;
+    }
+
+    void finish_thread(){
+        liste_thread_fontomes=null;
     }
 
     InetSocketAddress get_multicast(){
@@ -91,6 +120,7 @@ public class Partie {
         return labyrinthe.get_largeur();
     }
 
+    // fonction qui retourne l'addresse de multi cast en string qui respect le format du protocole
     String get_ip_mult() {
         String ip = multicast.getAddress().getHostAddress();
         for (int i = ip.length(); i < 15; i++)
@@ -98,16 +128,18 @@ public class Partie {
         return ip;
     }
 
+    // fonction qui retourne l'port de multi cast en string qui respect le format du protocole
     String get_port_mult() {
         return String.valueOf(multicast.getPort());
     }
 
+    // fonction qui gere la requet du downmove du joueur
     void downmove( Short d, Player player) throws Exception{
         Labyrinthe.Cellul[][] matrice = labyrinthe.get_matrice();
         short i=player.get_i();
         short j=player.get_j();
 
-        while (i+1 < get_hauteur() && matrice[i+1][j].route && d > 0) {
+        while (i+1< get_hauteur() && matrice[i+1][j].route && d > 0) {
             i++;
             d--;
             labyrinthe.capture(player,i,j);
@@ -116,12 +148,13 @@ public class Partie {
         player.set_i(i);
     }
 
+    // fonction qui gere la requet du leftmove du joueur
     void leftmove(Short d, Player player) throws Exception {
         Labyrinthe.Cellul[][] matrice = labyrinthe.get_matrice();
         short i=player.get_i();
         short j=player.get_j();
 
-        while (j-1 > 0 && matrice[i][j-1].route && d > 0 ) {
+        while (j > 0 && matrice[i][j-1].route && d > 0 ) {
             j--;
             d--;
             labyrinthe.capture(player,i,j);
@@ -129,6 +162,7 @@ public class Partie {
         player.set_j(j);
     }
 
+    // fonction qui gere la requet du rightmove du joueur
     void rightmove(Short d, Player player) throws Exception{
         Labyrinthe.Cellul[][] matrice = labyrinthe.get_matrice();
         short i=player.get_i();
@@ -142,12 +176,13 @@ public class Partie {
         player.set_j(j);
     }
 
+    // fonction qui gere la requet du upmove du joueur
     void upmove(Short d, Player player)  throws Exception {
         Labyrinthe.Cellul[][] matrice = labyrinthe.get_matrice();
         short i=player.get_i();
         short j=player.get_j();
 
-        while (i-1 >0 && matrice[i-1][j].route&& d > 0 && d>0) {
+        while (i>0 && matrice[i-1][j].route && d>0) {
             i--;
             d--;
             labyrinthe.capture(player, i,j);
@@ -156,10 +191,12 @@ public class Partie {
         player.set_i(i);
     }
 
+    // verifier si la postion n'est pas un mur
     public boolean valid(int i, int j) {
         return labyrinthe.valid(i, j);
     }
 
+    // fonction qui gere de l'envoie de multi multicast (mail)
     void envoie_multi(byte[] buff,int r,String id) throws Exception{
 
         byte[] buf=new byte[18+r];
@@ -184,6 +221,7 @@ public class Partie {
         dso.close();
     }
 
+    // fonction qui gere l'envoie en multicast lorsque un joueur capteur un fontome
     void envoie_capture(Player player,short i,short j) throws Exception{
         DatagramSocket dso=new DatagramSocket();
         byte[] buff =new byte[30];
@@ -225,6 +263,7 @@ public class Partie {
         dso.close();
     }
 
+    // fonction qui gere le message de fin de partie (multicast / endga) 
     void endga() throws Exception{
         String id=null;
         Integer score=-1;
@@ -261,20 +300,41 @@ public class Partie {
         dso.close();
     }
 
+    // fonction qui lance les thread des fontomes
     void lunch_fontomes_threads(){
-        if(liste_thread_fontomes!=null)
-            for(Thread t :liste_thread_fontomes)t.start();
-        liste_thread_fontomes=null;
-        /*for(Labyrinthe.Cellul[] l : labyrinthe.get_matrice()){
-            for(Labyrinthe.Cellul c : l){
-                if(c.route)System.out.print(" ");
-                else System.out.print("*");
-            }
+        for(Thread t :liste_thread_fontomes)t.start();
+        
+        System.out.print("-");
+        for(int i=0;i<labyrinthe.get_matrice()[0].length;i++){
+            System.out.print("--");
+        }
+        Labyrinthe.Cellul c;
+        //affichage du labyrinthe
+        for(Labyrinthe.Cellul[] l : labyrinthe.get_matrice()){
             System.out.println();
-        }*/
+            System.out.print("|");
+            for(int i=0;i<labyrinthe.get_matrice()[0].length;i++){
+                c=l[i];
+                if(i<labyrinthe.get_matrice()[0].length-1){
+                    if(c.route)System.out.print(" |");
+                    else System.out.print("*|");
+                }else{
+                    if(c.route)System.out.print(" ");
+                    else System.out.print("*");
+                }
+            }
+            System.out.print("|");
+        }
+        System.out.println();
+        System.out.print("-");
+        for(int i=0;i<labyrinthe.get_matrice()[0].length;i++){
+            System.out.print("--");
+        }
+        System.out.println();
 
     }
 
+    // fonction qui envoie la nouvelle postion du fantome lorsque il se deplace
     void send_pos_fon(Short i,Short j) throws Exception{
         DatagramSocket dso =new DatagramSocket();
 
@@ -309,6 +369,7 @@ public class Partie {
 
     }
 
+    // class de thread de fantome
     class Thread_fantome extends Thread{
         Labyrinthe.Fantome f;
         short i,j;
@@ -324,7 +385,8 @@ public class Partie {
             Random r=new Random();
             while(labyrinthe.get_nb_fontomes()!=0 && !f.capturer){
                 try {
-                    sleep((r.nextInt(100)+60)*1000);
+                    sleep((r.nextInt(50)+20)*1000);
+                    if (labyrinthe.get_nb_fontomes()==0 || f.capturer) break;
                     move();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -333,6 +395,7 @@ public class Partie {
             }
         }
         
+        // fonction qui bouge le fantomme
         private void move() throws Exception{
             Random r = new Random();
             boolean b;
@@ -406,7 +469,8 @@ public class Partie {
             }
         } 
 
-        private void change_fontome(short i_prec,short j_prec,short new_i,short new_j){
+        // fonction qui change la postion  d'un fantomme
+        protected void change_fontome(short i_prec,short j_prec,short new_i,short new_j){
             Labyrinthe.Cellul cel_prec=labyrinthe.get_matrice()[i_prec][j_prec];
             synchronized(cel_prec){
                 cel_prec.ls_fantomes.remove(f);

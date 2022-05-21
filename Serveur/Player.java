@@ -56,10 +56,13 @@ public class Player {
         partie = p;
     }
 
+    //enleve le joueur d'une partie
     void remove_from_game() {
         partie = null;
+        id=null;
     }
 
+    //initialise le joeur dans la map
     void set_ij() {
         Random r = new Random();
         i = (short)r.nextInt(partie.get_hauteur());
@@ -70,6 +73,7 @@ public class Player {
         }
     }
 
+    // recuperer la postion x du joueur en format string qui respect le format 
     String get_string_i() {
         String ret = String.valueOf(i);
         for (int p = ret.length(); p < 3; p++) {
@@ -78,6 +82,7 @@ public class Player {
         return ret;
     }
 
+    // recuperer la postion y du joueur en format string qui respect le format 
     String get_string_j() {
         String ret = String.valueOf(j);
         for (int p = ret.length(); p < 3; p++) {
@@ -101,12 +106,15 @@ public class Player {
     void incremente_i(){
         i++;
     }
+    
     void des_incremente_i(){
         i--;
     }
+    
     void incremente_j(){
         j++;
     }
+    
     void des_incremente_j(){
         j--;
     }
@@ -114,10 +122,12 @@ public class Player {
     short get_i(){
         return i;
     }
+    
     short get_j(){
         return j;
     }
 
+    // recuperer la le score du joueur en format string qui respect le format 
     String getscore_string() {
         String r=score.toString();
         for(int i=r.length();i<4;i++)
@@ -129,6 +139,7 @@ public class Player {
         return score;
     }
 
+    // fonctioon qui gere la fermeteure de la connexion avec le joueur
     void fermer_cnx() throws Exception{
         in.close();
         out.close();
@@ -143,8 +154,8 @@ public class Player {
                 }
 
                 synchronized(Serveur.syn_partie_c){
-                    if(Serveur.list_parties_c.get(partie.getnumero())!=null){
-                        Serveur.list_parties_c.remove(partie.getnumero());
+                    if(Serveur.list_parties_c.contains(partie)){
+                        Serveur.list_parties_c.remove(partie);
                         Serveur.set_socket_multi.remove(partie.get_multicast());
                         partie.set_nb_fontome((byte)0);
                     }
@@ -152,6 +163,15 @@ public class Player {
                 
             }
         }
+
+        if(partie!=null){
+            String key=address.getHostAddress()+port;
+
+            synchronized(Serveur.set_udp){
+                Serveur.set_udp.remove(key);
+            }
+        }
+
     }
 
     void set_game_finisher(boolean b){

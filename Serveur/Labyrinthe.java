@@ -28,15 +28,16 @@ public class Labyrinthe {
         return matrice;
     }
 
-    public Labyrinthe(Partie p) {
-        init((short) 50, (short) 50,p);
+    public Labyrinthe(Partie p,boolean b) {
+        init((short) 4, (short) 4,p,b);
     }
 
-    public Labyrinthe(short hauteur, short largeur,Partie p) {
-        init(hauteur, largeur,p);
+    public Labyrinthe(short hauteur, short largeur,Partie p,boolean b) {
+        init(hauteur, largeur,p,b);
     }
 
-    public void init(short hauteur, short largeur,Partie p) {
+    // fonction qui creer le labyrinthe
+    public void init(short hauteur, short largeur,Partie p,boolean type) {
         this.hauteur = hauteur;
         this.largeur = largeur;
         this.nb_fontomes = (byte)(hauteur * largeur / 16);
@@ -61,25 +62,41 @@ public class Labyrinthe {
 
                 switch (r.nextInt(4)) {
                     case 0:
-                        if (c + 1 < largeur) {
+                        if(type){
+                           c=(c+1)%largeur;
+                            b=false ;
+                        }
+                        else if (c + 1 < largeur) {
                             c++;
                             b = false;
                         }
                         break;
                     case 1:
-                        if (c > 0) {
+                        if(type){
+                            c=(c-1+largeur)%largeur;
+                            b=false ;
+                        }
+                        else if (c > 0) {
                             c--;
                             b = false;
                         }
                         break;
                     case 2:
-                        if (l > 0) {
+                        if(type){
+                            l=(l-1+hauteur)%hauteur;
+                            b=false ;
+                        }
+                        else if (l > 0) {
                             l--;
                             b = false;
                         }
                         break;
                     case 3:
-                        if (l + 1 < hauteur) {
+                        if(type){
+                            l=(l+1)%hauteur;
+                            b=false ;
+                        }
+                        else if (l + 1 < hauteur) {
                             l++;
                             b = false;
                         }
@@ -110,6 +127,7 @@ public class Labyrinthe {
         }
     }
 
+    //fonction qui dit c'est une position est valide (on peut iniatialiser la postion du joueur dans cette case)
     public boolean valid(int i, int j) {
         if (i >= hauteur || i < 0 || j < 0 || j >= largeur || !matrice[i][j].route)
             return false;
@@ -120,6 +138,7 @@ public class Labyrinthe {
         return nb_fontomes;
     }
 
+    // fonction qui la capture d'un fontome ( qui verifie que un fontomes est la case i j et le capture)
     void capture(Player player,short i,short j) throws Exception{
         
         ArrayList<Fantome> ls=matrice[i][j].ls_fantomes;
@@ -144,6 +163,7 @@ public class Labyrinthe {
                 if (nb_fontomes==0) {
                     player.set_game_finisher(true);
                     player.getgame().endga();
+                    player.getgame().finish_thread();
                 }
             }
 
@@ -160,6 +180,42 @@ public class Labyrinthe {
 
     void set_nb_fontomes(byte i){
         nb_fontomes=i;
+    }
+
+    //extrension elle retourne la matrice 
+    byte[] getbyte_map(){
+        String s="-";
+
+
+        for(int i=0;i<matrice[0].length;i++){
+            s+="--";
+        }
+        Labyrinthe.Cellul c;
+        for(Labyrinthe.Cellul[] l : matrice){
+            s+=" |";
+            for(int i=0;i<matrice[0].length;i++){
+                c=l[i];
+                if(i<matrice[0].length-1){
+                    if(c.route)
+                        s+=" |";
+                    else 
+                        s+="*|";
+                }else{
+                    if(c.route)
+                        s+=" ";
+                    else 
+                        s+="*";    
+                }
+            }
+            s+="|";
+        }
+
+        s+=" -";
+        for(int i=0;i<matrice[0].length;i++){
+            s+="--";
+        }
+        return s.getBytes();
+
     }
 
 }

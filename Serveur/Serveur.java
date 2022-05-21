@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -11,8 +12,9 @@ public class Serveur {
     static Object syn_nb_partie = new Object();
     static HashMap<Byte, Partie> list_parties_nc = new HashMap<>();
     static Object syn_partie_c = new Object();
-    static HashMap<Byte, Partie> list_parties_c = new HashMap<>();
+    static ArrayList< Partie> list_parties_c = new ArrayList<>();
     static HashSet<InetSocketAddress> set_socket_multi=new HashSet<>();
+    static HashSet<String> set_udp=new HashSet<>();
 
     public static void main(String[] args) {
 
@@ -38,6 +40,8 @@ public class Serveur {
 
     }
 
+    // fonction qui genere une adresse de multi cast pour une partie 
+    // on fait appeelle à elle dans la fontion add_new_game ci dessous
     private static InetSocketAddress generate_udp_multicast() {
         int min;
         int max;
@@ -60,14 +64,25 @@ public class Serveur {
         return ret;
     }
 
-    static Partie add_new_game(byte n, Player player) {
+    // fonction qui ajoute une nouvelle partie  
+    static Partie add_new_game(byte n, Player player,boolean b,short h,short w) {
         if (nb_partie == 255)
-            return null;
-        // peutetre une erreur si on a plus de adr port de multicast
+        return null;
+        // peutetre une erreur si on a plus de adr port de multicast (cas d'erreur est vraiment
+        // trés petit seulement si on s'ature tout les port donc 9999-1023 partie)
         InetSocketAddress isa = generate_udp_multicast();
-        Partie partie = new Partie(n, isa);
-        partie.init_labyrinthe();
-        partie.add_player(player);
+        Partie partie;
+        if(b){
+            partie = new Partie_extension(n, isa);
+            ((Partie_extension) partie).init_labyrinthe(b,h,w);
+        }
+        else{
+            partie = new Partie(n, isa);
+            partie.init_labyrinthe(b);
+        }
+        if(!partie.add_player(player)){
+            return null;
+        }
         list_parties_nc.put(n, partie);
         nb_partie++;
         return partie;

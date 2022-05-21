@@ -28,7 +28,12 @@ public abstract class External {
     static byte[] CAPTURE_FAN="SCORE ".getBytes();
     static byte[] GHOST="GHOST ".getBytes();
     static byte[] ENDGA ="ENDGA ".getBytes();   
+    static byte[] CHAOK ="CHAOK***".getBytes();
+    static byte[] CHANO ="CHANO***".getBytes();
+    static byte[] LABYR ="LABYR".getBytes();
 
+    static final String GAMEC ="GAMEC"; 
+    static final String LISTC ="LISTC";  
     static final String MAIL_REQ= "MALL?";
     static final String START = "START";
     static final String SEND_REQ="SEND?";
@@ -41,9 +46,14 @@ public abstract class External {
     static final String LIST_REQ = "LIST?";
     static final String GAME_REQ = "GAME?";
     static final String UNREG = "UNREG";
-    static final String NEWLP = "NEWPL";
+    static final String NEWPL = "NEWPL";
+    static final String NEWLP = "NEWLP";
     static final String REGIS = "REGIS";
     static final String GLIS = "GLIS?";
+    static final String CHAID ="CHAID"; 
+    static final String CHUDP ="CHUDP"; 
+    static final String PRINT ="PRINT"; 
+    static final String GHOPS ="GHOPS"; 
 
     static public void arraycopy(byte[] src, int offset, byte[] target, int offset_traget, int size) {
         for (int i = 0; i < size; i++) {
