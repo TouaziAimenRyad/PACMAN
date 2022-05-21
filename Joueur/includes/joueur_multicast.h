@@ -19,5 +19,4 @@
 void* recv_muilti_def(void* args);
 void abonner_multi(char * ip_multicast,char* port_multicast);//after start reply we call this to inter the multicast ring
 
-
 #endif /* A1E10F8F_3F6D_4834_9495_0D42C5D81F27 */

@@ -1,15 +1,19 @@
 
 #include "joueur_multicast.h"
-
+int multicast_sock;
 //recevoir les messages multicasts
 void* recv_muilti_def(void* args){
     //receive by paquets not all at once cause your not sur of the size
-    int multicast_sock=*((int *)args);
+    multicast_sock=*((int *)args);
     char buff[218];
     char *x,*y,*id,*point,*message;
     while(1)
     {
         int r=recv(multicast_sock,buff,218,0);
+        if(r==-1){
+            perror("error");
+            exit(1);
+        }
         if(strncmp(buff,"GHOST",5)==0){
             x=buff+6;
             x[3]='\0';
@@ -51,10 +55,9 @@ void* recv_muilti_def(void* args){
 
 //abonner a une adresse multicast
 void abonner_multi(char * ip_multicast,char* port_multicast){
-    int sock;
-    sock=socket(PF_INET,SOCK_DGRAM,0);
+    multicast_sock=socket(PF_INET,SOCK_DGRAM,0);
     int ok=1;
-    int r=setsockopt(sock,SOL_SOCKET,SO_REUSEPORT,&ok,sizeof(ok));
+    int r=setsockopt(multicast_sock,SOL_SOCKET,SO_REUSEPORT,&ok,sizeof(ok));
     if(r!=0){
         perror("error");
         exit(1);
@@ -63,13 +66,21 @@ void abonner_multi(char * ip_multicast,char* port_multicast){
     address_sock.sin_family=AF_INET;
     address_sock.sin_port=htons(atoi(port_multicast));
     address_sock.sin_addr.s_addr=htonl(INADDR_ANY);
-    r=bind(sock,(struct sockaddr *)(&address_sock),sizeof(struct sockaddr_in));
+    r=bind(multicast_sock,(struct sockaddr *)(&address_sock),sizeof(struct sockaddr_in));
+    if(r!=0){
+        perror("bind multicast\n");
+        exit(1);
+    }
     struct ip_mreq mreq;
     mreq.imr_multiaddr.s_addr=inet_addr(ip_multicast);
     mreq.imr_interface.s_addr=htonl(INADDR_ANY);
-    r=setsockopt(sock,IPPROTO_IP,IP_ADD_MEMBERSHIP,&mreq,sizeof(mreq));
+    r=setsockopt(multicast_sock,IPPROTO_IP,IP_ADD_MEMBERSHIP,&mreq,sizeof(mreq));
+    if(r!=0){
+        perror("bind multicast\n");
+        exit(1);
+    }
     //we're gonna use sock to send and rcv hence it's gonna be returned
     pthread_t th ;
-    pthread_create(&th,NULL,recv_muilti_def,&sock);
+    pthread_create(&th,NULL,recv_muilti_def,&multicast_sock);
 }
 
