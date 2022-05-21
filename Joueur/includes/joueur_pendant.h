@@ -21,12 +21,14 @@ void move_up(int connection_socket,int dist);
 void move_down(int connection_socket,int dist);
 void move_left(int connection_socket,int dist);
 void move_right(int connection_socket,int dist);
-void reply_move(int connection_socket);
+int reply_move(int connection_socket);
 void quit(int connection_socket);
 void get_list_req(int connection_socket);
-void get_list_res(int connection_socket);
-void send_muilti_def_mail(int connection_socket ,char* message);
-void send_private_msg(int connection_socket, char *id, char *message);
+int get_list_res(int connection_socket);
+int send_muilti_def_mail(int connection_socket ,char* message);
+int send_private_msg(int connection_socket, char *id, char *message);
+int afficher_labyrinthe(int connection_socket);
+int ghost_positions(int connection_socket);
 
 
 #endif /* AACE20D2_EF50_4531_A19A_D03573EF0633 */

@@ -1,7 +1,8 @@
 
 #include "joueur_debut.h"
-void start(int connection_socket)
-{
+
+//demander de commencer une partie
+void start(int connection_socket){
     if (send(connection_socket,"START***",8,0)<8)
     {
         perror("prolem while sending\n");
@@ -11,9 +12,9 @@ void start(int connection_socket)
 
 
 }
-//nhi ta3k hat hadia
-int start_reply(int connection_socket,char* udp_port)
-{
+
+//recevoir la reponse du start
+int start_reply(int connection_socket,char* udp_port){
     int size=39;
     char reply[39];
     int inc=0;
@@ -56,7 +57,7 @@ int start_reply(int connection_socket,char* udp_port)
     port[4]='\0';
     
     char *real_ip=remove_hashtags(ip);
-    printf("WELCOME %u ,hauteur %u,largeur %u, nb fontomes %u ,ip %s ,port %s\n",n_partie,h,w,n_fantom,real_ip,port);
+    printf("WELCOME in game N° %u ,hauteur %u,largeur %u, nb fontomes %u ,ip %s ,port %s\n",n_partie,h,w,n_fantom,real_ip,port);
 
     int size_pos=25;
     char reply_pos[25];
@@ -78,7 +79,7 @@ int start_reply(int connection_socket,char* udp_port)
     x[3]='\0';
     char *y=(char *)(reply_pos+19);
     y[3]='\0';
-    printf("\nPOSITION id=%s ,x= %d,y= %d\n\n",id,atoi(x),atoi(y));
+    printf("POSITION for id=%s is x= %d,y= %d\n\n",id,atoi(x),atoi(y));
 
     //start listening to the private msg
     pthread_t th;

@@ -1,7 +1,7 @@
 #include "joueur_pendant.h"
 
-void move_up(int connection_socket,int dist){   
-    printf("move up\n");
+//demander un move up
+void move_up(int connection_socket,int dist){
     char d[3];
     char buff[3];
     sprintf(buff,"%d",dist);
@@ -18,10 +18,8 @@ void move_up(int connection_socket,int dist){
 
 }
 
-//////////////////////////////////////
-
+//demander un move down
 void move_down(int connection_socket,int dist){   
-    printf("move down\n");
     char d[3];
     char buff[3];
     sprintf(buff,"%d",dist);
@@ -37,10 +35,8 @@ void move_down(int connection_socket,int dist){
     }
 }
 
-////////////////////////////////////////
-
+//demander un move left
 void move_left(int connection_socket,int dist){   
-    printf("move left\n");
     char d[3];
     char buff[3];
     sprintf(buff,"%d",dist);
@@ -55,10 +51,8 @@ void move_left(int connection_socket,int dist){
     }
 }
 
-//////////////////////////////////
-
+//demander un move rigth
 void move_right(int connection_socket,int dist){   
-    printf("move right\n");
     char d[3];
     char buff[3];
     sprintf(buff,"%d",dist);
@@ -74,11 +68,8 @@ void move_right(int connection_socket,int dist){
     }
 }
 
-//////////////////////////////////////
-
-//bdlnaha
-void reply_move(int connection_socket){
-    printf("reply move \n");
+//recevoir la reponse du serveur pour un move
+int reply_move(int connection_socket){
     char reply_msg[5];
     int inc =0;
     while (inc<5){
@@ -90,6 +81,7 @@ void reply_move(int connection_socket){
         }
         inc+=r; 
     }
+
     if(strncmp("MOVE!",reply_msg,5)==0){
         char reply_mv[11];
         inc =0;
@@ -108,7 +100,7 @@ void reply_move(int connection_socket){
         new_x[3]='\0';
         char* new_y=reply_mv+5;
         new_y[3]='\0';
-        printf("x= %d, y=%d\n",atoi(new_x),atoi(new_y));
+        printf("position x= %d, y=%d\n",atoi(new_x),atoi(new_y));
 
     }
     else if(strncmp("MOVEF",reply_msg,5)==0){
@@ -130,7 +122,7 @@ void reply_move(int connection_socket){
         char* point=reply_mvf+9;
         point[4]='\0';
 
-        printf("x= %d, y=%d, p=%d\n",atoi(new_x),atoi(new_y),atoi(point));
+        printf("position x= %d, y=%d,points=%d\n",atoi(new_x),atoi(new_y),atoi(point));
     }else if(strncmp("GOBYE",reply_msg,5)==0){
         char bye[3];
         inc =0;
@@ -143,13 +135,15 @@ void reply_move(int connection_socket){
             }
             inc+=r;    
         }
+        printf("goodbye\n");
         close(connection_socket);
+        return 1;
     }
+    return 0;
 }
 
-///////////////////////////////////
+//demander de quitter une partie
 void quit(int connection_socket){
-    printf("quit\n");
     if (send(connection_socket,"IQUIT***",8,0)<8)
     {
         perror("prolem while sending\n");
@@ -169,11 +163,13 @@ void quit(int connection_socket){
         }
         inc+=r;    
     }
+    if(strncmp("GOBYE",reply,5)==0){
+        printf("goodbye\n");
+        close(connection_socket);
+    }
 }
 
-
-/////////////////////////////////////////////////
-
+//demander la liste des joueurs de la partie
 void get_list_req(int connection_socket)
 {
     if (send(connection_socket,"GLIS?***",8,0)<8)
@@ -184,8 +180,8 @@ void get_list_req(int connection_socket)
     }
 }
 
-void get_list_res(int connection_socket){
-    printf("get list while playing\n");
+//recevoir la liste des joueurs de la partie 
+int get_list_res(int connection_socket){
     char reply[5];
     int inc =0;
     while (inc<5)
@@ -264,16 +260,16 @@ void get_list_res(int connection_socket){
                     }
                 inc+=r;    
             }
+            printf("goodbye\n");
             close(connection_socket);
+            return 1;
         }
-    }   
+    }  
+    return 0; 
 }
 
-
-
-
-void send_muilti_def_mail(int connection_socket,char* message){   
-    printf("send mail while playing\n");    
+//envoyer un message multicast
+int send_muilti_def_mail(int connection_socket,char* message){      
     int msg_size=strlen(message);
     char *buff= malloc(msg_size+9);
     sprintf((char*) buff,"MALL? %s***",message);
@@ -309,18 +305,17 @@ void send_muilti_def_mail(int connection_socket,char* message){
     {
         close(connection_socket);
         printf("goodbye \n");
+        return 1;
     }
     else if(!strncmp(server_reply,"DUNNO",5))
     {
-        printf("message not sended \n");
+        printf("message not sent \n");
     }
+    return 0;
 }
 
-//udp
-
-void send_private_msg(int connection_socket,char* id,char *message)
-{
-    printf("send private msg while playing\n");    
+//envoyer un message udp
+int send_private_msg(int connection_socket,char* id,char *message){
     int msg_size=strlen(message);
     void *buff= malloc(msg_size+18);
     sprintf((char*) buff,"SEND? %s %s***",id,message);
@@ -355,11 +350,154 @@ void send_private_msg(int connection_socket,char* id,char *message)
     }    
     else if(!strncmp(server_reply,"NSEND",5))
     {
-        printf("can't send msg  %s\n",(char *)(server_reply));
+        printf("can't send msg \n");
     }
     else if(!strncmp(server_reply,"GOBYE",5))
     {
         close(connection_socket);
-        printf("goodbye  %s\n",(char *)(server_reply));
+        printf("goodbye\n");
+        return 1;
     }
+    return 0;
+}
+
+//cheat afficher labyrinthe
+int afficher_labyrinthe(int connection_socket){
+    void * buff=malloc(9);
+    void * buff2=malloc(12);
+    sprintf((char*)buff,"PRINT***");
+    if (send(connection_socket,buff,8,0)<8)
+    {
+        perror("prolem while sending\n");
+        free(buff);
+        close(connection_socket);
+        exit(1);
+    }
+    int inc=0;
+    while (inc<5)
+    {
+        int r=recv(connection_socket,buff2+inc,5-inc,0);
+        if (r==-1)
+        {   
+            perror("prolem while receiving\n");
+            free(buff2);
+            close(connection_socket);
+            exit(1);
+        }
+        inc+=r;    
+    }
+    if(!strncmp(buff2,"GOBYE",5))
+    {
+        close(connection_socket);
+        printf("goodbye\n");
+        return 1;
+    }
+    if(strncmp(buff2,"LABYR",5)==0){
+        int inc=0;
+        while (inc<5)
+        {
+            int r=recv(connection_socket,buff2+inc,5-inc,0);
+            if (r==-1)
+            {   
+                perror("prolem while receiving\n");
+                free(buff2);
+                close(connection_socket);
+                exit(1);
+            }
+            inc+=r;    
+        }
+        uint16_t hauteur=ntohs(*(uint16_t*)(buff2+1))+2;
+        uint16_t largeur=ntohs(*(uint16_t*)(buff2+4))*2+1;
+        int taille=hauteur*largeur+hauteur;
+        void *buff3=malloc(taille);
+        inc=0;
+        while (inc<taille-1){
+            int r=recv(connection_socket,buff3+inc,taille-1-inc,0);
+                if (r==-1){   
+                    perror("prolem while receiving\n");
+                    free(buff3);
+                    close(connection_socket);
+                    exit(1);
+                }
+            inc+=r;   
+        }
+        for(uint16_t i=0;i<hauteur;i++){
+            *(char*)(buff3+largeur)='\0';
+            printf("%s\n",(char*)buff3);
+            buff3=buff3+largeur+1;
+        }
+    }
+    return 0;
+}
+
+//cheat afficher la position des fontomes
+int ghost_positions(int connection_socket){
+    void * buff=malloc(9);
+    void * buff2=malloc(5);
+    sprintf((char*)buff,"GHOPS***");
+    if (send(connection_socket,buff,8,0)<8)
+    {
+        perror("prolem while sending\n");
+        free(buff);
+        close(connection_socket);
+        exit(1);
+    }
+    int inc=0;
+    while (inc<5)
+    {
+        int r=recv(connection_socket,buff2+inc,5-inc,0);
+        if (r==-1)
+        {   
+            perror("prolem while receiving\n");
+            free(buff2);
+            close(connection_socket);
+            exit(1);
+        }
+        inc+=r;    
+    }
+    if (!strncmp(buff2,"GOBYE",5))
+    {
+        close(connection_socket);
+        printf("goodbye\n");
+        return 1;
+    } 
+    if(strncmp(buff2,"GHORE",5)==0){
+        int inc=0;
+        while (inc<5)
+        {
+            int r=recv(connection_socket,buff2+inc,5-inc,0);
+            if (r==-1)
+            {   
+                perror("prolem while receiving\n");
+                free(buff2);
+                close(connection_socket);
+                exit(1);
+            }
+            inc+=r;    
+        }
+        uint8_t nb_fontomes=*(uint16_t*)(buff2+1);
+        int taille=16*nb_fontomes;
+        void *buff3=malloc(taille);
+        inc=0;
+        while (inc<taille){
+            int r=recv(connection_socket,buff3+inc,taille-inc,0);
+                if (r==-1){   
+                    perror("prolem while receiving\n");
+                    free(buff3);
+                    close(connection_socket);
+                    exit(1);
+                }
+            inc+=r;   
+        }
+        char *x,*y;
+        for(uint16_t i=0;i<nb_fontomes;i++){
+            x=buff3+6;
+            y=buff3+10;
+            x[3]='\0';
+            y[3]='\0';
+            printf("fontome à la position :x=%s y=%s\n",(char*)x,(char*)y);
+            buff3=buff3+16;
+        }
+    }
+    return 0; 
 }

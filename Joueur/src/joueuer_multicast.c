@@ -1,7 +1,8 @@
 
 #include "joueur_multicast.h"
 
-void* recv_muilti_def(void* args){ //!!!!!!!! probleme 
+//recevoir les messages multicasts
+void* recv_muilti_def(void* args){
     //receive by paquets not all at once cause your not sur of the size
     int multicast_sock=*((int *)args);
     char buff[218];
@@ -26,14 +27,21 @@ void* recv_muilti_def(void* args){ //!!!!!!!! probleme
             x[3]='\0';
             y=buff+24;
             y[3]='\0';
-            printf("score SCORE id=%s point=%s x=%s y=%s\n",id,point,x,y);
+            printf("score id=%s point=%s x=%s y=%s\n",id,point,x,y);
         }
         else if(strncmp(buff,"MESSA",5)==0){
             id=buff+6;
             id[8]='\0';
             message=buff+15;
             message[r-18]='\0';
-            printf("message MESSA id=%s message=%s\n",id,message);
+            printf("message id=%s message=%s\n",id,message);
+        }
+        else if(strncmp(buff,"ENDGA",5)==0){
+            id=buff+6;
+            id[8]='\0';
+            point=id+9;
+            point[4]='\0';
+            printf("End game, the winner is %s with %s points\n",id,point);
         }
     }
     
@@ -41,8 +49,8 @@ void* recv_muilti_def(void* args){ //!!!!!!!! probleme
     
 }
 
-void abonner_multi(char * ip_multicast,char* port_multicast)
-{
+//abonner a une adresse multicast
+void abonner_multi(char * ip_multicast,char* port_multicast){
     int sock;
     sock=socket(PF_INET,SOCK_DGRAM,0);
     int ok=1;

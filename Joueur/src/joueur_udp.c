@@ -1,7 +1,7 @@
 #include "joueur_udp.h"
 
-void * recv_udp_message(void * arg)
-{
+//recevoir un message udp
+void * recv_udp_message(void * arg){
     int port=atoi((char *)arg);
     int sock=socket(PF_INET,SOCK_DGRAM,0);
     struct sockaddr_in adress_sock;
@@ -21,6 +21,4 @@ void * recv_udp_message(void * arg)
         printf("received from : %s \n\t message: %s\n",(char*)buff+6,(char*)buff+15);
 
     }
-    
-
 }
