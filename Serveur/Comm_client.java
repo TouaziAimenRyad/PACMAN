@@ -4,6 +4,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Objects;
 import java.util.Random;
 
 public class Comm_client implements Runnable {
@@ -26,7 +27,6 @@ public class Comm_client implements Runnable {
 
         } catch (Exception e) {
            try {
-                e.printStackTrace();
                 player.fermer_cnx();
             } catch (Exception e1) {
                 e1.printStackTrace();
@@ -137,7 +137,7 @@ public class Comm_client implements Runnable {
 
         game();
 
-        if ( start != true) {
+        if ( Objects.equals(start, null) || start==false) {
             player.fermer_cnx();
             return;
         }
